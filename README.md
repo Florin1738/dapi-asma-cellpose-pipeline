@@ -79,6 +79,38 @@ Windows PowerShell:
 python scripts\validate_cellpose_counts.py --output output\cellpose_counts
 ```
 
+## Current Target Normalization Command
+
+The current provisional target-normalization command measures full-field candidate `CH2` signal and divides by the candidate `CH4` Cellpose nucleus count:
+
+```bash
+.venv/bin/python scripts/run_target_normalization.py \
+  --input ApYYM20AGGSMA_02 \
+  --counts output/cellpose_counts \
+  --output output/target_normalization \
+  --target-channel CH2 \
+  --dapi-channel CH4 \
+  --background-percentile 10
+```
+
+Validate the generated normalized-intensity artifacts:
+
+```bash
+.venv/bin/python scripts/validate_target_normalization.py --output output/target_normalization
+```
+
+Current target-normalization outputs:
+
+```text
+output/target_normalization/summaries/image_level_summary.csv
+output/target_normalization/summaries/well_level_summary.csv
+output/target_normalization/plots/normalized_intensity_by_well.png
+output/target_normalization/plots/target_integrated_vs_nucleus_count.png
+output/target_normalization/qc/
+output/target_normalization/qc_contact_sheet.png
+output/target_normalization/logs/config_resolved.yaml
+```
+
 ## Planned Full Pipeline Command
 
 ```bash
@@ -130,6 +162,7 @@ output/
 - [Data QC review](docs/DATA_QC_REVIEW.md): representative channel-preview images for visual logic checks.
 - [Cellpose smoke test](docs/CELLPOSE_SMOKE_TEST.md): one-image Cellpose setup and segmentation result.
 - [Cellpose nuclei count run](docs/CELLPOSE_NUCLEI_COUNT_RUN.md): all-position count-only Cellpose run, output paths, counts, and caveats.
+- [Target normalization run](docs/TARGET_NORMALIZATION_RUN.md): provisional CH2-per-CH4-nucleus measurements, visualizations, and caveats.
 - [Roadmap](docs/ROADMAP.md): implementation sequence.
 
 ## Near-Term Milestones

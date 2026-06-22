@@ -50,6 +50,28 @@ output/cellpose_counts/
 
 `config_resolved.yaml` records software versions, requested device, model path/hash when available, channel extraction policy, segmentation parameters, filtering state, output paths, and one record per processed image. `run_log.txt` is a short human-readable summary of the same run.
 
+## Current Target-Normalization Output
+
+The current target-normalization command is a provisional full-field measurement. It writes:
+
+```text
+output/target_normalization/
+  logs/
+    config_resolved.yaml
+    run_log.txt
+  summaries/
+    image_level_summary.csv
+    well_level_summary.csv
+  plots/
+    normalized_intensity_by_well.png
+    target_integrated_vs_nucleus_count.png
+  qc/
+    <position_id>_CH2_target_with_CH4_nucleus_outlines.png
+  qc_contact_sheet.png
+```
+
+`image_level_summary.csv` uses the full output contract columns plus `well_id`, `mask_path`, and `qc_overlay_path` for traceability. `well_level_summary.csv` is currently identical to the image-level rows because each `XY##` position has one image pair in the local sample data.
+
 ## `image_level_summary.csv`
 
 Required columns:

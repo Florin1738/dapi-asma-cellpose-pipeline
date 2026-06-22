@@ -99,3 +99,16 @@ output/cellpose_counts/qc_contact_sheet.png
 ```
 
 These images are review aids only. Formal validation still requires manual ground-truth annotations.
+
+## Current Target-Normalization Visuals
+
+The target-normalization run writes:
+
+```text
+output/target_normalization/plots/normalized_intensity_by_well.png
+output/target_normalization/plots/target_integrated_vs_nucleus_count.png
+output/target_normalization/qc/<position_id>_CH2_target_with_CH4_nucleus_outlines.png
+output/target_normalization/qc_contact_sheet.png
+```
+
+The bar chart ranks `XY##` positions by provisional background-corrected `CH2` intensity per `CH4` nucleus. The scatter plot separates numerator (`CH2` signal) from denominator (`CH4` nucleus count). The QC overlays show `CH2` target intensity with `CH4` Cellpose nucleus outlines so the numerator and denominator can be checked visually in the same field.
