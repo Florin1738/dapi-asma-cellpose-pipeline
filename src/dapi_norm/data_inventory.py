@@ -137,6 +137,12 @@ def inventory_dataset(root: Path | str) -> DatasetInventory:
             parsed.position_id,
             PositionInventory(position_id=parsed.position_id, sample_id=parsed.sample_id),
         )
+        if position.sample_id != parsed.sample_id:
+            raise ValueError(
+                "Duplicate position ID across samples is ambiguous: "
+                f"{parsed.position_id} appears in both {position.sample_id} and {parsed.sample_id}. "
+                "Run each sample separately or add sample-aware output naming first."
+            )
         if parsed.kind == "overlay":
             info = image_file_info(path, allow_display_projection=True)
             position.overlay = info
@@ -186,25 +192,21 @@ def _write_manifest_csv(inventory: DatasetInventory, path: Path) -> None:
         writer.writeheader()
         for position in inventory.positions.values():
             for channel_id, info in sorted(position.channels.items()):
-                writer.writerow(_manifest_row(inventory.root, position.position_id, "channel", channel_id, info))
+                writer.writerow(_manifest_row(position.position_id, "channel", channel_id, info))
             if position.overlay is not None:
                 writer.writerow(
-                    _manifest_row(inventory.root, position.position_id, "overlay", "", position.overlay)
+                    _manifest_row(position.position_id, "overlay", "", position.overlay)
                 )
 
 
 def _manifest_row(
-    root: Path,
-    position_id: str,
-    kind: str,
-    channel_id: str,
-    info: ImageFileInfo,
+    position_id: str, kind: str, channel_id: str, info: ImageFileInfo
 ) -> dict[str, str | int | float]:
     return {
         "position_id": position_id,
         "kind": kind,
         "channel_id": channel_id,
-        "path": str(info.path.relative_to(root)),
+        "path": str(info.path),
         "width": info.width,
         "height": info.height,
         "dtype": info.dtype,
@@ -237,15 +239,10 @@ def _write_interpretation_manifest_csv(inventory: DatasetInventory, path: Path) 
         writer.writeheader()
         for position in inventory.positions.values():
             for channel_id, info in sorted(position.channels.items()):
-                writer.writerow(_interpretation_row(inventory.root, position.position_id, channel_id, info))
+                writer.writerow(_interpretation_row(position.position_id, channel_id, info))
 
 
-def _interpretation_row(
-    root: Path,
-    position_id: str,
-    channel_id: str,
-    info: ImageFileInfo,
-) -> dict[str, str]:
+def _interpretation_row(position_id: str, channel_id: str, info: ImageFileInfo) -> dict[str, str]:
     if channel_id == "CH4":
         rgb_component = "blue"
         candidate_stain = "candidate_DAPI"
@@ -267,7 +264,7 @@ def _interpretation_row(
 
     return {
         "position_id": position_id,
-        "source_file": str(info.path.relative_to(root)),
+        "source_file": str(info.path),
         "filename_channel": channel_id,
         "rgb_component": rgb_component,
         "candidate_stain": candidate_stain,
@@ -325,6 +322,6 @@ def _write_summary_markdown(inventory: DatasetInventory, path: Path) -> None:
     if inventory.unparsed_tiff_paths:
         lines.extend(["", "## Unparsed TIFF Files", ""])
         for unparsed in inventory.unparsed_tiff_paths:
-            lines.append(f"- `{unparsed.relative_to(inventory.root)}`")
+            lines.append(f"- `{unparsed}`")
 
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")

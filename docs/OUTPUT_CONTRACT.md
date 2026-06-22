@@ -27,6 +27,29 @@ output/
     optional intermediate images
 ```
 
+## Current Count-Only Output
+
+The current implemented Cellpose command is a count-only pilot, not the full target-intensity endpoint. It writes:
+
+```text
+output/cellpose_counts/
+  logs/
+    config_resolved.yaml
+    run_log.txt
+  summaries/
+    nucleus_counts.csv
+    per_nucleus_locations.csv
+  masks/
+    <position_id>_<channel_id>_<model>_labels.tif
+  qc/
+    <position_id>_<channel_id>_<model>_montage.png
+  qc_contact_sheet.png
+```
+
+`nucleus_counts.csv` is intentionally smaller than the planned full `image_level_summary.csv`. It records input image, backend, model, candidate channel, unconfirmed channel warning, mask path, montage path, and nucleus count.
+
+`config_resolved.yaml` records software versions, requested device, model path/hash when available, channel extraction policy, segmentation parameters, filtering state, output paths, and one record per processed image. `run_log.txt` is a short human-readable summary of the same run.
+
 ## `image_level_summary.csv`
 
 Required columns:
@@ -130,4 +153,3 @@ mean_iou_matched
 count_error
 count_error_percent
 ```
-

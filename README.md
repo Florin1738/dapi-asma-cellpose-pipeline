@@ -13,7 +13,15 @@ This pipeline uses DAPI to count DAPI-positive nuclei. It does not normalize by 
 
 ## Current Status
 
-This is a groundwork pass. The repository now captures the scientific contract, install strategy, output schema, validation plan, and implementation roadmap. The Cellpose runtime is not installed yet, model weights are not downloaded yet, and the analysis CLI is not implemented yet.
+The Cellpose-first groundwork is now runnable for nuclei counting on the local sample data. The project has:
+
+- a project-local Python environment with Cellpose 4.2.1.1 and PyTorch
+- a local `cpsam_v2` model cache in `.models/cellpose`
+- data inventory and channel-preview tooling for the `ApYYM20AGGSMA_02` folder
+- a count-only Cellpose CLI for the candidate DAPI channel
+- per-position masks, CSV summaries, and QC montages for all 12 sample positions
+
+The full target-channel intensity normalization endpoint is still future work. Also, the sample files are RGB pseudocolor TIFF exports, so `CH4` is treated as candidate DAPI until microscope metadata or acquisition notes confirm the channel identity.
 
 ## Why Cellpose First
 
@@ -21,7 +29,57 @@ Cellpose is the v1 segmentation target because it is a mature Python package, su
 
 StarDist remains useful for comparison, especially for compact nuclei, but it brings TensorFlow environment constraints. CellProfiler and QuPath are valuable GUI/reference tools but are not the default runtime path for this folder-based CLI project.
 
-## Planned Command
+## Current Count Command
+
+The current implemented command counts nuclei from the candidate DAPI channel:
+
+```bash
+CELLPOSE_LOCAL_MODELS_PATH="$PWD/.models/cellpose" \
+  .venv/bin/python scripts/run_cellpose_counts.py \
+  --input ApYYM20AGGSMA_02 \
+  --output output/cellpose_counts \
+  --channel CH4 \
+  --model cpsam_v2 \
+  --gpu
+```
+
+PowerShell equivalent for a Windows NVIDIA setup:
+
+```powershell
+$env:CELLPOSE_LOCAL_MODELS_PATH = "$PWD\.models\cellpose"
+python scripts\run_cellpose_counts.py `
+  --input ApYYM20AGGSMA_02 `
+  --output output\cellpose_counts `
+  --channel CH4 `
+  --model cpsam_v2 `
+  --gpu
+```
+
+Current output summary:
+
+```text
+output/cellpose_counts/summaries/nucleus_counts.csv
+output/cellpose_counts/summaries/per_nucleus_locations.csv
+output/cellpose_counts/masks/
+output/cellpose_counts/qc/
+output/cellpose_counts/qc_contact_sheet.png
+output/cellpose_counts/logs/config_resolved.yaml
+output/cellpose_counts/logs/run_log.txt
+```
+
+Validate the generated count artifacts:
+
+```bash
+.venv/bin/python scripts/validate_cellpose_counts.py --output output/cellpose_counts
+```
+
+Windows PowerShell:
+
+```powershell
+python scripts\validate_cellpose_counts.py --output output\cellpose_counts
+```
+
+## Planned Full Pipeline Command
 
 ```bash
 python scripts/run_pipeline.py \
@@ -70,14 +128,15 @@ output/
 - [Data inventory](docs/DATA_INVENTORY.md): current local sample-data shape, without committing private images.
 - [Data organization](docs/DATA_ORGANIZATION.md): detailed map of the current `ApYYM20AGGSMA_02` folder and channel-role caveats.
 - [Data QC review](docs/DATA_QC_REVIEW.md): representative channel-preview images for visual logic checks.
-- [Cellpose smoke test](docs/CELLPOSE_SMOKE_TEST.md): local Cellpose setup result and current model-download blocker.
+- [Cellpose smoke test](docs/CELLPOSE_SMOKE_TEST.md): one-image Cellpose setup and segmentation result.
+- [Cellpose nuclei count run](docs/CELLPOSE_NUCLEI_COUNT_RUN.md): all-position count-only Cellpose run, output paths, counts, and caveats.
 - [Roadmap](docs/ROADMAP.md): implementation sequence.
 
 ## Near-Term Milestones
 
-1. Build synthetic image generation and measurement math tests.
-2. Implement TIFF/OME-TIFF discovery and channel extraction.
-3. Implement Cellpose nuclei segmentation with saved masks and centroids.
-4. Export image-level measurements and QC overlays.
-5. Add manual centroid validation.
-6. Evaluate StarDist only after Cellpose is working and QC-reviewed.
+1. Confirm channel identities from acquisition metadata or raw microscope exports.
+2. Add target-channel intensity measurement using the Cellpose nuclei masks.
+3. Add area and border filtering to produce raw and filtered nucleus counts.
+4. Add manual centroid validation against reviewer annotations.
+5. Generate an HTML QC report for batch review.
+6. Evaluate StarDist only after Cellpose count QC is accepted.

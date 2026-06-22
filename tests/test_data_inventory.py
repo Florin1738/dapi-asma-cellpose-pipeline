@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import csv
 
 import numpy as np
 import tifffile
@@ -111,18 +112,39 @@ def test_write_inventory_reports_creates_manifest_and_markdown(tmp_path: Path):
     manifest_text = manifest.read_text(encoding="utf-8")
     assert "position_id,kind,channel_id,path,width,height,dtype" in manifest_text
     assert "XY01,channel,CH2" in manifest_text
+    with manifest.open(encoding="utf-8", newline="") as handle:
+        manifest_rows = list(csv.DictReader(handle))
+    assert all(Path(row["path"]).exists() for row in manifest_rows)
     interpretation_text = interpretation.read_text(encoding="utf-8")
     assert "position_id,source_file,filename_channel,rgb_component,candidate_stain" in (
         interpretation_text
     )
     assert "requires_confirmation" in interpretation_text
-    assert "XY01,ApYYM20AGGSMA_02/XY01/ApYYM20AGGSMA_XY01_CH2.tif,CH2,red,candidate_target,,unconfirmed,unconfirmed,true" in (
+    with interpretation.open(encoding="utf-8", newline="") as handle:
+        interpretation_rows = list(csv.DictReader(handle))
+    assert all(Path(row["source_file"]).exists() for row in interpretation_rows)
+    assert (
+        f"XY01,{data_root / 'ApYYM20AGGSMA_02' / 'XY01' / 'ApYYM20AGGSMA_XY01_CH2.tif'},"
+        "CH2,red,candidate_target,,unconfirmed,unconfirmed,true"
+    ) in (
         interpretation_text
     )
-    assert "XY01,ApYYM20AGGSMA_02/XY01/ApYYM20AGGSMA_XY01_CH4.tif,CH4,blue,candidate_DAPI,,unconfirmed,unconfirmed,true" in (
+    assert (
+        f"XY01,{data_root / 'ApYYM20AGGSMA_02' / 'XY01' / 'ApYYM20AGGSMA_XY01_CH4.tif'},"
+        "CH4,blue,candidate_DAPI,,unconfirmed,unconfirmed,true"
+    ) in (
         interpretation_text
     )
     summary_text = summary.read_text(encoding="utf-8")
     assert "# Dataset Summary" in summary_text
     assert "Positions: 1" in summary_text
     assert "Channel IDs: CH2, CH4" in summary_text
+
+
+def test_inventory_rejects_duplicate_position_ids_across_samples(tmp_path: Path):
+    data_root = tmp_path / "dataset"
+    write_tiff(data_root / "SampleA" / "XY01" / "SampleA_XY01_CH4.tif", 40)
+    write_tiff(data_root / "SampleB" / "XY01" / "SampleB_XY01_CH4.tif", 50)
+
+    with pytest.raises(ValueError, match="Duplicate position ID"):
+        inventory_dataset(data_root)
