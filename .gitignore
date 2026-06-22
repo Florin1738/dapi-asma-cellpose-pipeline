@@ -14,6 +14,7 @@ build/
 # Local image-analysis outputs and model caches
 output/
 outputs/
+docs/assets/data_inventory/
 data/
 *.ome.tif
 *.ome.tiff
@@ -23,7 +24,13 @@ data/
 *.nd2
 *.lif
 .models/
-ApYYM20AGGSMA_02/
+ApYYM20AGGSMA_02/**
+!ApYYM20AGGSMA_02/
+!ApYYM20AGGSMA_02/README.md
+!ApYYM20AGGSMA_02/ApYYM20AGGSMA_02/
+!ApYYM20AGGSMA_02/ApYYM20AGGSMA_02/README.md
+!ApYYM20AGGSMA_02/__ApYYM20AGGSMA_02/
+!ApYYM20AGGSMA_02/__ApYYM20AGGSMA_02/README.md
 
 # Keep intentionally small examples/configs in git; real microscopy data stays out.
 !examples/

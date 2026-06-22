@@ -68,6 +68,9 @@ output/
 - [QC and visualization](docs/QC_AND_VISUALIZATION.md): overlays, montages, and how outputs will be reviewed.
 - [Validation](docs/VALIDATION.md): manual centroid and mask validation protocol.
 - [Data inventory](docs/DATA_INVENTORY.md): current local sample-data shape, without committing private images.
+- [Data organization](docs/DATA_ORGANIZATION.md): detailed map of the current `ApYYM20AGGSMA_02` folder and channel-role caveats.
+- [Data QC review](docs/DATA_QC_REVIEW.md): representative channel-preview images for visual logic checks.
+- [Cellpose smoke test](docs/CELLPOSE_SMOKE_TEST.md): local Cellpose setup result and current model-download blocker.
 - [Roadmap](docs/ROADMAP.md): implementation sequence.
 
 ## Near-Term Milestones

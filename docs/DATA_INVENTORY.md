@@ -18,6 +18,7 @@ Observed files:
 36 tif
 13 txt
 12 lnk
+3 md navigation READMEs added locally
 ```
 
 Approximate folder size:
@@ -48,17 +49,18 @@ Each observed XY folder contains:
 Initial metadata check on `XY01`:
 
 ```text
-CH2: 960 x 720, 16-bit TIFF
-CH4: 960 x 720, 16-bit TIFF
+CH2: 960 x 720 x 3 RGB pseudocolor, 16-bit TIFF, plus 120 x 160 thumbnail
+CH4: 960 x 720 x 3 RGB pseudocolor, 16-bit TIFF, plus 120 x 160 thumbnail
 ```
+
+The current TIFF files are RGB rendered exports, not plain grayscale single-channel scientific images. See `docs/DATA_ORGANIZATION.md` for the full organization and risk assessment.
 
 ## Sidecar and Error Files
 
-The `.lnk` files and `_Error.txt` files appear to be download/shortcut sidecars, not microscopy images. The pipeline should ignore them during image discovery.
+The `.lnk` files and `_Error.txt` files appear to be download/shortcut sidecars, not microscopy images. The pipeline should ignore them during image discovery. The `.md` files are local navigation READMEs added for this project.
 
 `___All_Errors.txt` reports that several files/folders were not downloaded, with a UTC timestamp of `06/22/2026 19:40:58`.
 
 ## Open Question
 
-The pipeline still needs confirmation of which channel is DAPI and which channel is the target stain. The file names indicate `CH2` and `CH4`, but channel identity cannot be inferred safely from the names alone.
-
+The pipeline still needs confirmation of which channel is DAPI and which channel is the target stain. Current evidence suggests `CH4` is DAPI and `CH2` is target, but that is based on visual morphology and pseudocolor, not embedded metadata.
