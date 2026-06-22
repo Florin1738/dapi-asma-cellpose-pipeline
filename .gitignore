@@ -1,0 +1,30 @@
+.DS_Store
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Local image-analysis outputs and model caches
+output/
+outputs/
+data/
+*.ome.tif
+*.ome.tiff
+*.tif
+*.tiff
+*.czi
+*.nd2
+*.lif
+.models/
+ApYYM20AGGSMA_02/
+
+# Keep intentionally small examples/configs in git; real microscopy data stays out.
+!examples/
+!configs/

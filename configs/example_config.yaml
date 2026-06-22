@@ -1,0 +1,50 @@
+# Example analysis configuration for the planned CLI.
+input: /path/to/images
+output: /path/to/output
+
+image_discovery:
+  recursive: true
+  extensions:
+    - .tif
+    - .tiff
+    - .ome.tif
+    - .ome.tiff
+  max_images: null
+
+channels:
+  dapi_channel: 0
+  target_channel: 1
+  z_mode: max
+  z_index: null
+
+segmentation:
+  backend: cellpose
+  cellpose_model: nuclei
+  diameter: auto
+  use_gpu: auto
+  flow_threshold: null
+  cellprob_threshold: null
+  min_nucleus_area: 20
+  max_nucleus_area: null
+  exclude_border: true
+
+measurement:
+  background: percentile
+  background_percentile: 10
+  saturation_fraction_warn_threshold: 0.001
+
+roi:
+  mask_folder: null
+  count_rule: centroid_inside_roi
+
+qc:
+  save_qc: true
+  save_debug: false
+  numbered_centroids: true
+
+validation:
+  manual_centroids_csv: null
+  manual_masks_folder: null
+  match_radius_px: 8
+  iou_threshold: 0.5
+
