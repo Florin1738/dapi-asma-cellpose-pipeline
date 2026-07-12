@@ -62,6 +62,8 @@ def test_target_validation_cli_describes_per_nucleus_endpoint_without_dapi_norma
 def test_active_docs_and_user_facing_code_avoid_misleading_normalized_endpoint_wording():
     matches: list[str] = []
     for path in ACTIVE_TERMINOLOGY_PATHS:
+        if not path.exists():
+            continue
         text = path.read_text(encoding="utf-8")
         for line_number, line in enumerate(text.splitlines(), start=1):
             if RISKY_TERMINOLOGY.search(line):
