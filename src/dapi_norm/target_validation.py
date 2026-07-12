@@ -24,7 +24,10 @@ def validate_target_outputs(output_dir: Path | str) -> dict[str, Any]:
     contact_sheet_path = output_path / "qc_contact_sheet.png"
     for required_path in [summary_path, well_path, config_path, run_log_path, contact_sheet_path]:
         if not required_path.exists():
-            raise FileNotFoundError(f"Required target-normalization artifact missing: {required_path}")
+            raise FileNotFoundError(
+                "Required target per-DAPI-positive-nucleus artifact missing: "
+                f"{required_path}"
+            )
 
     rows = _read_csv(summary_path)
     well_rows = _read_csv(well_path)
@@ -75,7 +78,7 @@ def _validate_row(row: dict[str, str], output_path: Path) -> None:
     raw_sum = float(np.sum(target_float))
     mean_raw = float(np.mean(target_float))
     nucleus_count = filtered_count
-    normalized = corrected_sum / nucleus_count if nucleus_count > 0 else float("nan")
+    per_nucleus_endpoint = corrected_sum / nucleus_count if nucleus_count > 0 else float("nan")
 
     _assert_close(image_id, "background_value_per_px", background_value, row["background_value_per_px"])
     _assert_close(image_id, "target_integrated_raw", raw_sum, row["target_integrated_raw"])
@@ -88,8 +91,8 @@ def _validate_row(row: dict[str, str], output_path: Path) -> None:
     )
     _assert_close(
         image_id,
-        "normalized intensity",
-        normalized,
+        "target_integrated_intensity_per_DAPI_positive_nucleus",
+        per_nucleus_endpoint,
         row["target_integrated_intensity_per_DAPI_positive_nucleus"],
     )
 

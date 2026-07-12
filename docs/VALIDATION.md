@@ -66,19 +66,32 @@ Manual input:
 manual label-mask folder
 ```
 
+Executable validator:
+
+```bash
+.venv/bin/python scripts/validate_manual_instance_masks.py \
+  --candidate-dir output/seeded_asma_regions/plate1_ApYYM20AGGSMA_01_representative_otsu/masks \
+  --reference-dir manual_validation/reference_masks \
+  --output output/manual_mask_validation/seeded_otsu_vs_manual \
+  --iou-threshold 0.5
+```
+
 Matching rule:
 
 ```text
 A predicted mask matches a manual mask if IoU >= iou_threshold.
 Default iou_threshold: 0.5
+iou_threshold must be > 0 and <= 1.
 ```
 
 Metrics:
 
 ```text
-true_positives
-false_positives
-false_negatives
+n_manual
+n_predicted
+true_positives / matched_count
+false_positives / false_positive_count
+false_negatives / false_negative_count
 precision
 recall
 f1
@@ -86,6 +99,16 @@ mean_iou_matched
 count_error
 count_error_percent
 ```
+
+Validation is anchored to the manual/reference set. A manual image with no
+candidate mask is counted as zero predicted objects, so all manual objects in
+that image become false negatives. Candidate images with no manual/reference
+mask are logged as not evaluated because there is no ground truth for them.
+
+The validator also rejects non-2-D masks, non-integer label masks, negative
+labels, and binary/single-label masks that contain multiple disconnected
+objects. For instance validation, each object needs its own positive integer
+label.
 
 ## Validation Overlays
 
@@ -112,5 +135,4 @@ No universal threshold is scientifically correct for all experiments. A practica
 - inspect whether false positives and false negatives are balanced or biased
 - compare count error across experimental groups
 - require the same segmentation settings across groups unless there is a documented reason
-- do not use the normalized target endpoint until segmentation error is acceptable for the biological effect size being tested
-
+- do not use the per-DAPI-positive-nucleus target endpoint until segmentation error is acceptable for the biological effect size being tested

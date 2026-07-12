@@ -7,12 +7,16 @@ import typer
 
 from dapi_norm.target_validation import validate_target_outputs
 
-app = typer.Typer(help="Validate target-normalization output artifacts.")
+app = typer.Typer(help="Validate target per-DAPI-positive-nucleus output artifacts.")
 
 
 @app.command()
 def main(
-    output_dir: Path = typer.Option(..., "--output", help="Target-normalization output directory."),
+    output_dir: Path = typer.Option(
+        ...,
+        "--output",
+        help="Target per-DAPI-positive-nucleus output directory.",
+    ),
 ) -> None:
     result = validate_target_outputs(output_dir)
     typer.echo(f"summary_rows={result['summary_rows']}")

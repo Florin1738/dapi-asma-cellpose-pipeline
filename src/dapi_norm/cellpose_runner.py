@@ -42,6 +42,7 @@ def run_nuclei_count_batch(
     gpu: bool = True,
     max_images: int | None = None,
     segmenter: Segmenter | None = None,
+    channel_identity_confirmed: bool = False,
 ) -> list[dict[str, Any]]:
     input_path = Path(input_root)
     output_path = Path(output_dir)
@@ -95,7 +96,10 @@ def run_nuclei_count_batch(
             backend="cellpose",
             model_name=model_name,
             channel_id=channel_key,
-            candidate_stain="candidate_DAPI" if channel_key == "CH4" else "unknown",
+            candidate_stain="candidate_DAPI"
+            if channel_identity_confirmed or channel_key == "CH4"
+            else "unknown",
+            channel_identity_confirmed=channel_identity_confirmed,
             mask_path=mask_path,
             qc_montage_path=montage_path,
         )
@@ -110,6 +114,7 @@ def run_nuclei_count_batch(
                 "extracted_plane_dtype": str(image.dtype),
                 "channel_id": channel_key,
                 "candidate_stain": summary["candidate_stain"],
+                "channel_identity_confirmed": channel_identity_confirmed,
                 "nucleus_count": summary["nucleus_count"],
                 "mask_path": str(mask_path),
                 "qc_montage_path": str(montage_path),
@@ -130,6 +135,7 @@ def run_nuclei_count_batch(
         channel_id=channel_key,
         model_name=model_name,
         gpu=gpu,
+        channel_identity_confirmed=channel_identity_confirmed,
         image_records=image_records,
         contact_sheet_path=contact_sheet_path,
     )
@@ -249,6 +255,7 @@ def write_run_metadata(
     channel_id: str,
     model_name: str,
     gpu: bool,
+    channel_identity_confirmed: bool,
     image_records: list[dict[str, Any]],
     contact_sheet_path: Path,
 ) -> None:
@@ -258,7 +265,7 @@ def write_run_metadata(
         "input_root": str(input_root),
         "output_dir": str(output_dir),
         "channel_id": channel_id,
-        "channel_identity_confirmed": False,
+        "channel_identity_confirmed": channel_identity_confirmed,
         "channel_extraction": {
             "source": "primary TIFF series",
             "axes_policy": (
@@ -267,8 +274,9 @@ def write_run_metadata(
             ),
             "z_projection": "none",
             "current_channel_note": (
-                "CH4 is treated as candidate DAPI because it is the blue, punctate channel in the "
-                "current RGB exports; this is not metadata-confirmed"
+                f"{channel_id} is treated as DAPI/nuclei for this run when channel identity is "
+                "confirmed; otherwise CH4 is treated as candidate DAPI based on blue, punctate "
+                "morphology and non-CH4 channels are logged as unknown."
             ),
         },
         "model": _model_metadata(model_name),
@@ -312,8 +320,8 @@ def write_run_metadata(
                 f"requested_gpu: {gpu}",
                 f"images_processed: {len(image_records)}",
                 f"total_nucleus_count: {total_count}",
-                "channel_identity_confirmed: false",
-                "warnings: channel_identity_unconfirmed",
+                f"channel_identity_confirmed: {str(channel_identity_confirmed).lower()}",
+                f"warnings: {'' if channel_identity_confirmed else 'channel_identity_unconfirmed'}",
             ]
         )
         + "\n",

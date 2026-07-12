@@ -1,0 +1,56 @@
+========================================================================
+  Cellpose DAPI / aSMA Pipeline  —  READ ME FIRST
+========================================================================
+
+You only need to do ONE thing:
+
+  • On a Mac:      double-click  "Run Cellpose DAPI aSMA Pipeline.command"
+  • On Windows:    double-click  "Run Cellpose DAPI aSMA Pipeline Windows.cmd"
+
+The FIRST time you run it, it spends a few minutes installing itself
+(this needs an internet connection) and then opens a simple window.
+Every time after that, the window opens right away.
+
+In the window:
+  1. Click "Browse…" next to "Image folder" and choose your images.
+  2. Click "Browse…" next to "Results go to" and choose where to save.
+  3. Click "Run analysis".
+When it finishes, your results folder opens automatically. Start with
+the file named START_HERE_RUN_SUMMARY.html.
+
+------------------------------------------------------------------------
+  Mac only: if macOS refuses to open the file
+------------------------------------------------------------------------
+
+The first time, macOS may say the file is from an "unidentified
+developer", or it may just do nothing when you double-click. This is
+NORMAL for a new tool downloaded from the internet — it is not a virus.
+
+To open it:
+  1. RIGHT-CLICK (or hold Control and click) the "Run …" file.
+  2. Choose "Open" from the menu.
+  3. In the popup, click "Open" again.
+
+You only have to do this once. After that, a normal double-click works.
+
+------------------------------------------------------------------------
+  If something goes wrong
+------------------------------------------------------------------------
+
+  • "needs internet" / setup fails while downloading:
+       Check your Wi-Fi or network connection and run it again. The
+       first-time install downloads about 1–2 GB.
+
+  • The window shows a run FAILED:
+       The progress log inside the window explains what happened. Select
+       all of that text, copy it, and send it to whoever gave you this
+       tool, along with which folders you picked.
+
+  • It says "0 images were processed":
+       The image folder you picked probably doesn't contain the right
+       files. The tool looks inside XY sub-folders for pairs of TIFF
+       images ending in _CH2 (aSMA) and _CH4 (DAPI). Pick the folder that
+       contains those and try again.
+
+You do NOT need to install Python, Cellpose, CellProfiler, Docker, or
+anything else yourself. The Run file handles all of it.

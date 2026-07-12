@@ -1,208 +1,138 @@
-# Installation and Runtime Setup
+# Installation And Runtime Setup
 
-This document describes the current Cellpose-first setup. The Mac setup has been run successfully for the local sample data; the Windows NVIDIA path is the matching setup plan for larger GPU-backed batches.
+This project has two setup paths:
 
-## Common Policy
+- Routine users download a release zip and double-click a launcher.
+- Developers clone the repository and create a project-local Python environment.
 
-- Use a project-local environment.
-- Do not install into system Python.
-- Use Python 3.12 for the Cellpose-first path.
-- Keep Cellpose model weights outside git.
-- Verify CPU/GPU availability before running real data.
-- Install StarDist, CellProfiler, Docker, or QuPath only after Cellpose v1 works.
-- Use Cellpose 4 with `cpsam_v2` for the first runnable workflow.
+Do not install into system Python. Do not commit `.venv/`, Cellpose model weights, real microscopy images, or generated outputs.
 
-## Mac Apple Silicon Setup
+## Routine Mac Install
 
-This current Mac has Homebrew and `uv`, no conda/mamba, no Docker, and global Python 3.14.5. Python 3.14 is too new for a conservative bioimage stack, so use `uv` to provision Python 3.12.
+1. Download `cellpose-dapi-asma-pipeline-mac-*.zip` from the GitHub Releases page.
+2. Unzip it.
+3. Double-click `Run Cellpose DAPI aSMA Pipeline.command`.
+4. On first launch, wait for setup to finish. It installs `uv` for the current user if needed, creates `.venv/`, installs the project and Cellpose, downloads `cpsam_v2`, verifies imports, and opens the app.
+5. Pick the image folder and results folder in the app, then press **Run analysis**.
 
-```bash
-cd /Users/florinselaru/Documents/DAPI_intensity_quantification_tata
-uv python install 3.12
-uv venv --python 3.12 .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e '.[dev,cellpose]'
-```
+If macOS blocks the launcher, right-click or Control-click it, choose **Open**, then confirm **Open**. This is the usual Gatekeeper prompt for an unsigned downloaded script.
 
-For the closest reproduction of the successful 2026-06-22 Mac pilot run, use the dated constraints file:
+The optional `Setup Cellpose DAPI aSMA Pipeline.command` launcher performs the same setup without starting a run. Use it only to preinstall or repair the environment.
 
-```bash
-python -m pip install -c constraints/cellpose-mac-2026-06-22.txt -e '.[dev,cellpose]'
-```
+## Routine Windows Install
 
-Optional: keep Cellpose model downloads inside the project folder rather than the home directory.
+1. Download `cellpose-dapi-asma-pipeline-windows-*.zip` from the GitHub Releases page.
+2. Unzip it.
+3. Double-click `Run Cellpose DAPI aSMA Pipeline Windows.cmd`.
+4. On first launch, wait for setup to finish. It installs `uv` for the current user if needed, creates `.venv\Scripts\python.exe`, installs the project and Cellpose, downloads `cpsam_v2`, verifies imports, and opens the app.
+5. Pick the image folder and results folder in the app, then press **Run analysis**.
 
-```bash
-mkdir -p .models/cellpose
-export CELLPOSE_LOCAL_MODELS_PATH="$PWD/.models/cellpose"
-```
+The optional `Setup Cellpose DAPI aSMA Pipeline Windows.cmd` launcher performs the same setup without starting a run. Use it only to preinstall or repair the environment.
 
-The current Mac model cache is:
+For Windows NVIDIA machines, GPU acceleration depends on the installed NVIDIA driver and PyTorch build. The default release setup is still operational without CellProfiler, Docker, conda, or admin rights. A maintainer can install the machine-appropriate CUDA-enabled PyTorch wheel before routine users run large batches.
+
+## Input Requirements
+
+The default workflow expects TIFF image pairs organized by acquisition and field:
 
 ```text
-.models/cellpose/cpsam_v2
-size: 1.1G
-sha256: 0f1cc3f7ecdd8a037a57c6c48d9d8921391be4cbce3fa9f13c3e3a2e1253c667
+Parent folder/
+  AcquisitionName/
+    XY01/*_CH2.tif
+    XY01/*_CH4.tif
+    XY02/*_CH2.tif
+    XY02/*_CH4.tif
 ```
 
-If the automatic Cellpose model download is unreliable, this command downloads the model directly into the project cache:
+Default channel mapping:
+
+- `CH2`: aSMA target channel
+- `CH4`: DAPI nuclei channel
+
+Use the app channel selectors when a dataset has different channel names. If axes or channels cannot be inferred, the pipeline should fail clearly rather than silently guessing.
+
+## Developer Setup
+
+Use Python 3.12 in a project-local environment. On macOS, `uv` is preferred:
 
 ```bash
-mkdir -p .models/cellpose
-curl -L --fail --retry 8 --retry-all-errors --retry-delay 5 \
-  --connect-timeout 30 \
-  -o .models/cellpose/cpsam_v2.download \
-  https://huggingface.co/mouseland/cellpose-sam/resolve/main/cpsam_v2
-mv .models/cellpose/cpsam_v2.download .models/cellpose/cpsam_v2
+uv python install 3.12
+uv venv --python 3.12 .venv
+.venv/bin/python -m pip install -e '.[dev]'
 ```
 
-Verify Python and PyTorch:
+Install Cellpose runtime dependencies when you need to run segmentation:
 
 ```bash
-python - <<'PY'
-import platform
-import torch
-
-print("python ok")
-print("machine:", platform.machine())
-print("torch:", torch.__version__)
-print("mps_available:", torch.backends.mps.is_available())
-PY
+.venv/bin/python -m pip install -e '.[dev,cellpose]'
 ```
 
-Verify Cellpose imports:
+Optional Mac constraints from the original pilot environment:
 
 ```bash
-python - <<'PY'
-import cellpose
-print("cellpose:", getattr(cellpose, "__version__", "unknown"))
-PY
+.venv/bin/python -m pip install -c constraints/cellpose-mac-2026-06-22.txt -e '.[dev,cellpose]'
 ```
 
-If MPS is unavailable, the first local version can still run on CPU for small synthetic and pilot images. Large batch runs should move to the Windows NVIDIA machine.
+Run tests:
 
-Run the current count-only pipeline:
+```bash
+.venv/bin/python -m pytest
+```
+
+Run the batch CLI:
 
 ```bash
 CELLPOSE_LOCAL_MODELS_PATH="$PWD/.models/cellpose" \
-  .venv/bin/python scripts/run_cellpose_counts.py \
-  --input ApYYM20AGGSMA_02 \
-  --output output/cellpose_counts \
-  --channel CH4 \
-  --model cpsam_v2 \
-  --gpu
+  .venv/bin/python scripts/run_user_cellpose_batch.py \
+  --input /path/to/image_parent_folder \
+  --output /path/to/results_parent_folder \
+  --target-channel CH2 \
+  --dapi-channel CH4
 ```
 
-## Windows NVIDIA Setup
+## Model Cache
 
-Use this path if you want to run larger batches on a Windows PC with an NVIDIA GPU.
-
-1. Install or update the NVIDIA driver from NVIDIA.
-2. Install Python 3.12 from python.org or another trusted Python manager.
-3. Create a project virtual environment.
-
-PowerShell:
-
-```powershell
-cd C:\path\to\DAPI_intensity_quantification_tata
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-```
-
-Install PyTorch using the official selector at https://pytorch.org/get-started/locally/. Select:
+Cellpose downloads model weights on first use. This project uses a project-local model cache:
 
 ```text
-OS: Windows
-Package: Pip
-Language: Python
-Compute Platform: CUDA version supported by the installed NVIDIA driver
+.models/cellpose/cpsam_v2
 ```
 
-The current PyTorch selector should generate the exact command for the PC. The command will look like this, but the CUDA wheel tag may differ:
+The expected `cpsam_v2` SHA-256 recorded in `scripts/pipeline_env.py` is:
 
-```powershell
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+```text
+0f1cc3f7ecdd8a037a57c6c48d9d8921391be4cbce3fa9f13c3e3a2e1253c667
 ```
 
-Use the live selector output for the actual PC. Newer GPUs or drivers may use a newer CUDA wheel, and older drivers may require a different supported CUDA wheel.
+Model weights are not committed to git.
 
-Then install the project:
+## Release Packaging
 
-```powershell
-python -m pip install -e ".[dev,cellpose]"
+Build online installer zips:
+
+```bash
+.venv/bin/python scripts/make_release.py --version v1.0
 ```
 
-Do not blindly apply `constraints/cellpose-mac-2026-06-22.txt` on Windows before installing the CUDA-enabled PyTorch wheel chosen by the official selector. That file records the successful Mac pilot stack and is mainly useful for comparing package versions.
+Outputs:
 
-Verify CUDA:
-
-```powershell
-python - <<'PY'
-import torch
-print("torch:", torch.__version__)
-print("cuda_available:", torch.cuda.is_available())
-print("cuda_device_count:", torch.cuda.device_count())
-if torch.cuda.is_available():
-    print("cuda_device:", torch.cuda.get_device_name(0))
-PY
+```text
+dist/cellpose-dapi-asma-pipeline-mac-v1.0.zip
+dist/cellpose-dapi-asma-pipeline-windows-v1.0.zip
 ```
 
-Verify Cellpose:
+These zips include the launchers, source, scripts, docs, configs, examples, and tests. They exclude private data, generated outputs, model weights, virtual environments, masks, figures, workbooks, and report artifacts.
 
-```powershell
-python - <<'PY'
-import cellpose
-print("cellpose:", getattr(cellpose, "__version__", "unknown"))
-PY
+For an offline or faster first run, maintainers may add:
+
+```bash
+.venv/bin/python scripts/make_release.py --version v1.0 --with-model
 ```
 
-Set a project-local model cache and run the same count command from PowerShell:
+Use `--with-wheelhouse` only when a compatible local `wheelhouse/` has already been prepared.
 
-```powershell
-New-Item -ItemType Directory -Force .models\cellpose | Out-Null
-$env:CELLPOSE_LOCAL_MODELS_PATH = "$PWD\.models\cellpose"
-python scripts\run_cellpose_counts.py `
-  --input ApYYM20AGGSMA_02 `
-  --output output\cellpose_counts `
-  --channel CH4 `
-  --model cpsam_v2 `
-  --gpu
-```
-
-## Cellpose Model Download Behavior
-
-Cellpose downloads pretrained model weights on first use. For reproducibility:
-
-- Record the Cellpose package version in the run config, currently `output/cellpose_counts/logs/config_resolved.yaml`.
-- Record the model name and resolved model path.
-- Keep model weights out of git.
-- Prefer one fixed model name for v1, currently `cpsam_v2`.
-
-Cellpose 4.2.1.1 exposes the current built-in model names `cpsam_v2`, `cpdino`, `cpdino-vitb`, and `cpsam` in this environment. The old `nuclei` model name from earlier Cellpose workflows is not the active v4 path here.
-
-## Source Links Checked
+## Source Links
 
 - Cellpose installation docs: https://cellpose.readthedocs.io/en/latest/installation.html
 - Cellpose model docs: https://cellpose.readthedocs.io/en/latest/models.html
 - PyTorch local install selector: https://pytorch.org/get-started/locally/
-
-## Optional GUI Tools
-
-### Cellpose GUI
-
-Install only if interactive review/training is needed:
-
-```bash
-python -m pip install 'cellpose[gui]'
-python -m cellpose
-```
-
-### QuPath
-
-Install separately from the Python environment if whole-slide images, tissue annotations, or interactive ROI work become central. On Apple Silicon, use the arm64 package for speed unless file-format compatibility requires the Intel build.
-
-### CellProfiler
-
-Keep CellProfiler separate from this CLI project. It can be used later as a reference GUI pipeline or plugin-based comparison workflow.

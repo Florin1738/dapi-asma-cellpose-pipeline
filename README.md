@@ -1,175 +1,165 @@
-# DAPI Target-Stain Normalization
+# Cellpose DAPI / aSMA Per-Nucleus Quantification
 
-This repository will contain a reproducible local pipeline for fluorescence microscopy images where DAPI is used to count nuclei and a separate target channel is measured for signal.
+Self-contained local tool for measuring alpha-smooth muscle actin (aSMA) signal relative to DAPI-positive nucleus count in fluorescence microscopy images.
 
-The main endpoint is:
+The primary endpoint is:
 
 ```text
 target_integrated_intensity_per_DAPI_positive_nucleus =
-    target_integrated_background_corrected / filtered_DAPI_positive_nucleus_count
+    target_integrated_intensity / filtered_DAPI_positive_nucleus_count
 ```
 
-This pipeline uses DAPI to count DAPI-positive nuclei. It does not normalize by DAPI fluorescence intensity. The main endpoint is target-channel integrated intensity per DAPI-positive nucleus.
+DAPI is used to segment and count DAPI-positive nuclei. This is not DAPI fluorescence normalization: DAPI brightness is not used as the denominator.
 
-## Current Status
+## Quick Start For Mac And Windows Users
 
-The Cellpose-first groundwork is now runnable for nuclei counting on the local sample data. The project has:
+The easiest way to try the tool is to download the release zip for your operating system from the GitHub Releases page.
 
-- a project-local Python environment with Cellpose 4.2.1.1 and PyTorch
-- a local `cpsam_v2` model cache in `.models/cellpose`
-- data inventory and channel-preview tooling for the `ApYYM20AGGSMA_02` folder
-- a count-only Cellpose CLI for the candidate DAPI channel
-- per-position masks, CSV summaries, and QC montages for all 12 sample positions
+1. Download one zip:
+   - Mac: `cellpose-dapi-asma-pipeline-mac-*.zip`
+   - Windows: `cellpose-dapi-asma-pipeline-windows-*.zip`
+2. Unzip it.
+3. Double-click the run launcher:
+   - Mac: `Run Cellpose DAPI aSMA Pipeline.command`
+   - Windows: `Run Cellpose DAPI aSMA Pipeline Windows.cmd`
+4. On first launch, wait while the tool installs its local Python environment, Cellpose, and the Cellpose model. This needs an internet connection and can take several minutes.
+5. In the app window, choose the image folder, choose where results should go, and press **Run analysis**.
 
-The full target-channel intensity normalization endpoint is still future work. Also, the sample files are RGB pseudocolor TIFF exports, so `CH4` is treated as candidate DAPI until microscope metadata or acquisition notes confirm the channel identity.
+You do not need to install Python, Cellpose, CellProfiler, Docker, conda, or plugins yourself. The launcher creates a project-local `.venv/` and a project-local `.models/cellpose/cpsam_v2` model cache.
 
-## Why Cellpose First
+### macOS Security Prompt
 
-Cellpose is the v1 segmentation target because it is a mature Python package, supports pretrained segmentation workflows, has a documented nuclei-oriented path, and can run on both Apple Silicon and Windows/Linux NVIDIA environments through PyTorch.
+On first launch, macOS may block the `.command` file because it was downloaded from the internet. Use:
 
-StarDist remains useful for comparison, especially for compact nuclei, but it brings TensorFlow environment constraints. CellProfiler and QuPath are valuable GUI/reference tools but are not the default runtime path for this folder-based CLI project.
+```text
+Right-click or Control-click the launcher -> Open -> Open
+```
 
-## Current Count Command
+You normally only need to do that once.
 
-The current implemented command counts nuclei from the candidate DAPI channel:
+### Windows Notes
+
+The Windows launcher uses PowerShell internally and creates `.venv\Scripts\python.exe` inside the unzipped folder. It does not need administrator rights for the project environment. A Windows NVIDIA machine can be configured for GPU acceleration, but the default setup remains a local Cellpose install either way.
+
+## Expected Image Folder
+
+The routine runner expects TIFF image pairs organized by acquisition and field:
+
+```text
+Parent folder/
+  AcquisitionName/
+    XY01/*_CH2.tif
+    XY01/*_CH4.tif
+    XY02/*_CH2.tif
+    XY02/*_CH4.tif
+```
+
+Default channel mapping:
+
+- `CH2`: aSMA target channel
+- `CH4`: DAPI nuclei channel
+
+Use the app's channel selectors if your dataset uses different channel names. The tool supports TIFF/OME-TIFF first. Proprietary formats such as `.czi`, `.nd2`, and `.lif` should be converted before routine use unless an explicit converter path is added.
+
+## Main Outputs
+
+Each run creates a timestamped output folder. Start with:
+
+```text
+final/START_HERE_RUN_SUMMARY.html
+final/workbooks/cellpose_background_corrected_pi_style_summary.xlsx
+final/tables/cellpose_user_friendly_endpoint_summary.csv
+final/tables/cellpose_full_plate_endpoint_summary.csv
+final/figures/
+logs/user_cellpose_batch_run.yaml
+```
+
+Every analysis run is expected to produce visual QC overlays before results are considered reviewable. Visual QC is qualitative only; precision, recall, F1, false positives, and false negatives require manual ground truth.
+
+## Scientific Scope
+
+- The pipeline computes auditable image-analysis metrics.
+- It does not interpret biological significance.
+- Cellpose is the default backend.
+- In user-facing Cellpose outputs, "Cellpose" means Cellpose objects retained only when at least one DAPI-positive nucleus centroid falls inside the object.
+- Current cell-area style masks are candidate aSMA-associated regions, not validated whole-cell masks.
+
+## Developer Setup From Git
+
+Clone the repository, then create a project-local environment. On macOS and Linux, `uv` with Python 3.12 is preferred:
+
+```bash
+uv python install 3.12
+uv venv --python 3.12 .venv
+.venv/bin/python -m pip install -e '.[dev]'
+```
+
+To install the Cellpose runtime too:
+
+```bash
+.venv/bin/python -m pip install -e '.[dev,cellpose]'
+```
+
+Run tests:
+
+```bash
+.venv/bin/python -m pytest
+```
+
+Build release zips:
+
+```bash
+.venv/bin/python scripts/make_release.py --version v1.0
+```
+
+The release builder excludes real microscopy images, generated outputs, masks, model weights, manual annotations, and report artifacts.
+
+## Command-Line Runner
+
+The double-click app delegates to the same batch runner:
 
 ```bash
 CELLPOSE_LOCAL_MODELS_PATH="$PWD/.models/cellpose" \
-  .venv/bin/python scripts/run_cellpose_counts.py \
-  --input ApYYM20AGGSMA_02 \
-  --output output/cellpose_counts \
-  --channel CH4 \
-  --model cpsam_v2 \
-  --gpu
+  .venv/bin/python scripts/run_user_cellpose_batch.py \
+  --input /path/to/image_parent_folder \
+  --output /path/to/results_parent_folder \
+  --target-channel CH2 \
+  --dapi-channel CH4
 ```
 
-PowerShell equivalent for a Windows NVIDIA setup:
-
-```powershell
-$env:CELLPOSE_LOCAL_MODELS_PATH = "$PWD\.models\cellpose"
-python scripts\run_cellpose_counts.py `
-  --input ApYYM20AGGSMA_02 `
-  --output output\cellpose_counts `
-  --channel CH4 `
-  --model cpsam_v2 `
-  --gpu
-```
-
-Current output summary:
-
-```text
-output/cellpose_counts/summaries/nucleus_counts.csv
-output/cellpose_counts/summaries/per_nucleus_locations.csv
-output/cellpose_counts/masks/
-output/cellpose_counts/qc/
-output/cellpose_counts/qc_contact_sheet.png
-output/cellpose_counts/logs/config_resolved.yaml
-output/cellpose_counts/logs/run_log.txt
-```
-
-Validate the generated count artifacts:
+For a quick smoke test on a large folder:
 
 ```bash
-.venv/bin/python scripts/validate_cellpose_counts.py --output output/cellpose_counts
-```
-
-Windows PowerShell:
-
-```powershell
-python scripts\validate_cellpose_counts.py --output output\cellpose_counts
-```
-
-## Current Target Normalization Command
-
-The current provisional target-normalization command measures full-field candidate `CH2` signal and divides by the candidate `CH4` Cellpose nucleus count:
-
-```bash
-.venv/bin/python scripts/run_target_normalization.py \
-  --input ApYYM20AGGSMA_02 \
-  --counts output/cellpose_counts \
-  --output output/target_normalization \
+CELLPOSE_LOCAL_MODELS_PATH="$PWD/.models/cellpose" \
+  .venv/bin/python scripts/run_user_cellpose_batch.py \
+  --input /path/to/one_acquisition_folder \
+  --output /path/to/results_parent_folder \
   --target-channel CH2 \
   --dapi-channel CH4 \
-  --background-percentile 10
+  --max-images-per-acquisition 1 \
+  --skip-figures
 ```
 
-Validate the generated normalized-intensity artifacts:
+## Repository Data Policy
 
-```bash
-.venv/bin/python scripts/validate_target_normalization.py --output output/target_normalization
-```
+This repository is intended to contain source code, tests, configuration, setup launchers, and documentation. It must not contain:
 
-Current target-normalization outputs:
+- real microscopy images
+- generated masks, overlays, tables, workbooks, or reports derived from private lab data
+- Cellpose model weights
+- lab-private annotations
+- virtual environments
 
-```text
-output/target_normalization/summaries/image_level_summary.csv
-output/target_normalization/summaries/well_level_summary.csv
-output/target_normalization/plots/normalized_intensity_by_well.png
-output/target_normalization/plots/target_integrated_vs_nucleus_count.png
-output/target_normalization/qc/
-output/target_normalization/qc_contact_sheet.png
-output/target_normalization/logs/config_resolved.yaml
-```
+Folder-level README files are kept in `data/`, `output/`, `manual_validation/`, and `reports/` so local users understand those directories, but their contents are ignored by git.
 
-## Planned Full Pipeline Command
+## Documentation
 
-```bash
-python scripts/run_pipeline.py \
-  --input "/path/to/images" \
-  --output "/path/to/output" \
-  --dapi-channel 0 \
-  --target-channel 1 \
-  --backend cellpose \
-  --diameter auto \
-  --background percentile \
-  --background-percentile 10 \
-  --save-qc
-```
-
-## Planned Outputs
-
-```text
-output/
-  logs/
-    run_log.txt
-    config_resolved.yaml
-  summaries/
-    image_level_summary.csv
-    per_nucleus_locations.csv
-    roi_level_summary.csv
-    validation_metrics.csv
-  masks/
-    <image_id>_nuclei_labels.tif
-  qc/
-    <image_id>_dapi_nucleus_outlines.png
-    <image_id>_target_with_nucleus_outlines.png
-    <image_id>_dapi_numbered_centroids.png
-    <image_id>_segmentation_montage.png
-  validation/
-    <image_id>_validation_overlay.png
-```
-
-## Documentation Map
-
-- [Software research](docs/SOFTWARE_RESEARCH.md): Cellpose, StarDist, CellProfiler, QuPath, and platform choices.
-- [Installation](docs/INSTALLATION.md): Mac Apple Silicon and Windows NVIDIA setup plans.
-- [Image inputs](docs/IMAGE_INPUTS.md): supported formats, channel and Z-stack policy.
-- [Output contract](docs/OUTPUT_CONTRACT.md): CSV columns and file layout.
-- [QC and visualization](docs/QC_AND_VISUALIZATION.md): overlays, montages, and how outputs will be reviewed.
-- [Validation](docs/VALIDATION.md): manual centroid and mask validation protocol.
-- [Data inventory](docs/DATA_INVENTORY.md): current local sample-data shape, without committing private images.
-- [Data organization](docs/DATA_ORGANIZATION.md): detailed map of the current `ApYYM20AGGSMA_02` folder and channel-role caveats.
-- [Data QC review](docs/DATA_QC_REVIEW.md): representative channel-preview images for visual logic checks.
-- [Cellpose smoke test](docs/CELLPOSE_SMOKE_TEST.md): one-image Cellpose setup and segmentation result.
-- [Cellpose nuclei count run](docs/CELLPOSE_NUCLEI_COUNT_RUN.md): all-position count-only Cellpose run, output paths, counts, and caveats.
-- [Target normalization run](docs/TARGET_NORMALIZATION_RUN.md): provisional CH2-per-CH4-nucleus measurements, visualizations, and caveats.
-- [Roadmap](docs/ROADMAP.md): implementation sequence.
-
-## Near-Term Milestones
-
-1. Confirm channel identities from acquisition metadata or raw microscope exports.
-2. Add target-channel intensity measurement using the Cellpose nuclei masks.
-3. Add area and border filtering to produce raw and filtered nucleus counts.
-4. Add manual centroid validation against reviewer annotations.
-5. Generate an HTML QC report for batch review.
-6. Evaluate StarDist only after Cellpose count QC is accepted.
+- [Installation](docs/INSTALLATION.md): Mac, Windows, and developer setup.
+- [Nontechnical Cellpose batch runner](docs/NONTECHNICAL_CELLPOSE_BATCH_RUNNER.md): double-click workflow and expected outputs.
+- [Zero-to-run distribution](docs/ZERO_TO_RUN_DISTRIBUTION.md): release zip contents and maintainer smoke tests.
+- [Release packaging](docs/RELEASE_PACKAGING.md): maintainer steps for building and uploading GitHub release zips.
+- [Output contract](docs/OUTPUT_CONTRACT.md): stable output columns and file layout.
+- [Image inputs](docs/IMAGE_INPUTS.md): supported inputs, channel selection, and axis policy.
+- [QC and visualization](docs/QC_AND_VISUALIZATION.md): visual QC expectations.
+- [Validation](docs/VALIDATION.md): manual centroid and mask validation protocols.
+- [Methodology](docs/methodology/README.md): accepted, exploratory, and rejected method records.

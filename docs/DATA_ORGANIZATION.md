@@ -1,4 +1,33 @@
-# Data Organization: `ApYYM20AGGSMA_02`
+# Data Organization
+
+## Current Full Plate Data
+
+The active plate data are stored locally under:
+
+```text
+data/aSMA_DAPI_plates/
+```
+
+Current channel assignments:
+
+- `CH2`: alpha-smooth muscle actin (aSMA), target stain.
+- `CH4`: DAPI, nuclear stain.
+
+Current plate layout:
+
+```text
+data/aSMA_DAPI_plates/
+  plate 1/
+    ApYYM20AGGSMA_01/
+    ApYYM20AGGSMA_02/
+  plate 2/
+    APIPIKEALDSMA/
+    APIPIKEALDSMA_01/
+```
+
+Within each acquisition folder, images are organized by `XY##` field with channel TIFFs such as `*_CH2.tif` and `*_CH4.tif`.
+
+## Legacy Sample Data: `ApYYM20AGGSMA_02`
 
 Inventory date: 2026-06-22.
 
@@ -112,7 +141,7 @@ There is an `H06` duplication:
 
 The current files may be display-rendered RGB exports rather than raw fluorescence intensity images. That matters because rendered exports can be clipped, contrast-scaled, pseudocolored, or otherwise transformed.
 
-For serious quantification, prefer raw grayscale channel exports or OME-TIFFs with channel metadata. These current TIFFs can still be useful for orientation, Cellpose smoke tests, and visual QC development, but normalized intensity results from them should be treated as provisional until raw/export settings are confirmed.
+For serious quantification, prefer raw grayscale channel exports or OME-TIFFs with channel metadata. These current TIFFs can still be useful for orientation, Cellpose smoke tests, and visual QC development, but target integrated intensity per DAPI-positive nucleus results from them should be treated as provisional until raw/export settings are confirmed.
 
 ## Generated Navigation Outputs
 

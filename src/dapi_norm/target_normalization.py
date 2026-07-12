@@ -291,8 +291,10 @@ def _write_run_metadata(
             "background_method": "percentile",
             "background_percentile": background_percentile,
             "background_correction": "clip(target - background, lower=0)",
-            "normalization": (
-                "target_integrated_background_corrected / filtered_nucleus_count"
+            "primary_endpoint": "target_integrated_intensity_per_DAPI_positive_nucleus",
+            "denominator": "filtered_DAPI_positive_nucleus_count",
+            "endpoint_formula": (
+                "target_integrated_background_corrected / filtered_DAPI_positive_nucleus_count"
             ),
             "axes_policy": (
                 "singleton axes are squeezed; 2-D images are used directly; RGB/YXS exports "

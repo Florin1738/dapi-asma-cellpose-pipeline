@@ -7,14 +7,23 @@ import typer
 
 from dapi_norm.target_normalization import run_target_normalization
 
-app = typer.Typer(help="Measure candidate target intensity normalized by Cellpose nuclei counts.")
+app = typer.Typer(
+    help=(
+        "Measure candidate target integrated intensity per DAPI-positive nucleus "
+        "using Cellpose nuclei counts."
+    )
+)
 
 
 @app.command()
 def main(
     input_root: Path = typer.Option(..., "--input", help="Dataset root to process."),
     counts_dir: Path = typer.Option(..., "--counts", help="Cellpose count output directory."),
-    output_dir: Path = typer.Option(..., "--output", help="Target-normalization output directory."),
+    output_dir: Path = typer.Option(
+        ...,
+        "--output",
+        help="Output directory for target intensity per DAPI-positive nucleus artifacts.",
+    ),
     target_channel_id: str = typer.Option("CH2", "--target-channel", help="Candidate target channel."),
     dapi_channel_id: str = typer.Option("CH4", "--dapi-channel", help="Candidate DAPI channel."),
     background_percentile: float = typer.Option(
@@ -32,7 +41,8 @@ def main(
     for row in rows:
         typer.echo(
             f"{row['well_id']}: "
-            f"normalized={row['target_integrated_intensity_per_DAPI_positive_nucleus']:.3f} "
+            "target_integrated_intensity_per_DAPI_positive_nucleus="
+            f"{row['target_integrated_intensity_per_DAPI_positive_nucleus']:.3f} "
             f"nuclei={row['filtered_nucleus_count']}"
         )
 

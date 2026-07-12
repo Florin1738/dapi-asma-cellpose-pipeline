@@ -1,10 +1,10 @@
-# Target Normalization Run
+# Target Per-Nucleus Run
 
 Run date: 2026-06-22.
 
 ## Purpose
 
-This run measures provisional candidate-target signal from `CH2` and normalizes it by the Cellpose candidate-DAPI nucleus count from `CH4`.
+This run measures provisional candidate-target signal from `CH2` and divides it by the Cellpose candidate-DAPI nucleus count from `CH4`.
 
 Endpoint:
 
@@ -47,7 +47,7 @@ The validator checks that:
 - count rows used as denominators are Cellpose `CH4` rows
 - referenced masks exist and their nonzero label counts match the reported nucleus counts
 - `background_value_per_px` matches the declared percentile method
-- corrected integrated intensity and normalized intensity are recomputed from source images
+- corrected integrated intensity and the per-DAPI-positive-nucleus endpoint are recomputed from source images
 - image-level and well-level summaries do not diverge
 - expected plots and QC overlays exist
 
@@ -76,11 +76,17 @@ output/target_normalization/plots/normalized_intensity_by_well.png
 output/target_normalization/plots/target_integrated_vs_nucleus_count.png
 ```
 
+The `target_normalization` directory and `normalized_intensity` plot names are
+legacy artifact names. They refer to target CH2 intensity divided by
+DAPI-positive nucleus count, not normalization by DAPI fluorescence intensity.
+
 QC:
 
 ```text
 output/target_normalization/qc/<XY##_CH2_target_with_CH4_nucleus_outlines>.png
 output/target_normalization/qc_contact_sheet.png
+output/cellpose_counts/qc_dapi_centroid_xs/<XY##_CH4_DAPI_with_Cellpose_centroid_Xs>.png
+output/cellpose_counts/dapi_centroid_x_contact_sheet.png
 ```
 
 Run metadata:
@@ -113,9 +119,26 @@ Values are shown in scaled units for readability.
 
 The ranking plot shows `XY08`, `XY07`, `XY04`, and `XY02` as the highest provisional target signal per nucleus. `XY05` and `XY12` are much lower, and the target-channel QC contact sheet visually supports that pattern: both fields show weak/diffuse `CH2` signal relative to the high-signal fields.
 
+The count-dependence plot shows that raw corrected full-field `CH2` integrated intensity is moderately related to Cellpose nucleus count across these 12 images:
+
+```text
+Pearson r = 0.62
+Spearman rho = 0.36
+```
+
+The current per-DAPI-positive-nucleus endpoint is much less related to nucleus count:
+
+```text
+Pearson r = 0.19
+Spearman rho = 0.03
+```
+
+This does not prove biological independence from cell density. It only shows that the simple division by nucleus count removed much of the first-order count dependence in this small pilot set.
+
 ## Caveats
 
 - `CH2` and `CH4` identities remain unconfirmed.
 - The input files are rendered RGB TIFF exports rather than raw grayscale acquisition channels.
 - The numerator is full-field `CH2`, not a target-object mask or cell-associated target measurement.
 - The denominator uses all Cellpose labels; no area, edge, or manual-QC filtering has been applied.
+- Target-channel saturation exists, especially `XY04` at `7.84%` saturated pixels.

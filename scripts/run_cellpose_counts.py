@@ -18,6 +18,11 @@ def main(
     model_name: str = typer.Option("cpsam_v2", "--model", help="Cellpose model name."),
     max_images: int | None = typer.Option(None, "--max-images", help="Limit images for pilot runs."),
     gpu: bool = typer.Option(True, "--gpu/--cpu", help="Request GPU/MPS acceleration."),
+    channel_identity_confirmed: bool = typer.Option(
+        False,
+        "--channel-confirmed/--channel-unconfirmed",
+        help="Record whether the channel identity was confirmed before the run.",
+    ),
 ) -> None:
     summaries = run_nuclei_count_batch(
         input_root=input_root,
@@ -26,6 +31,7 @@ def main(
         model_name=model_name,
         gpu=gpu,
         max_images=max_images,
+        channel_identity_confirmed=channel_identity_confirmed,
     )
     for summary in summaries:
         typer.echo(f"{summary['image_id']}: nucleus_count={summary['nucleus_count']}")
@@ -33,4 +39,3 @@ def main(
 
 if __name__ == "__main__":
     app()
-

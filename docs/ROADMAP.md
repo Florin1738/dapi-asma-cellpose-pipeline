@@ -12,7 +12,7 @@
 
 - Generate synthetic two-channel images with known nuclei and target signal.
 - Test background correction.
-- Test normalized endpoint calculation.
+- Test target integrated intensity per DAPI-positive nucleus calculation.
 - Test CSV output schema.
 
 ## Phase 2: Image I/O
@@ -57,4 +57,3 @@
 - Add StarDist comparison backend after Cellpose is stable.
 - Document CellProfiler reference workflow if needed.
 - Document QuPath/ROI workflow if whole-slide or tissue-section images become central.
-

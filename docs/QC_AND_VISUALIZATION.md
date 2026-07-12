@@ -76,7 +76,7 @@ A later implementation can write:
 output/qc_report.html
 ```
 
-The report should include image thumbnails, raw and filtered nucleus counts, target normalized endpoint, warnings, and direct links to masks/CSVs.
+The report should include image thumbnails, raw and filtered nucleus counts, the target integrated intensity per DAPI-positive nucleus endpoint, warnings, and direct links to masks/CSVs.
 
 ## Current Count-Only QC Output
 

@@ -52,5 +52,4 @@ Target channel:
 
 - Used for integrated raw intensity.
 - Used for background-corrected integrated intensity.
-- Used for the normalized endpoint after division by filtered DAPI-positive nucleus count.
-
+- Used for the target integrated intensity per DAPI-positive nucleus endpoint after division by filtered DAPI-positive nucleus count.

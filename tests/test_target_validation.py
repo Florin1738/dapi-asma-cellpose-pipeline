@@ -46,7 +46,7 @@ def test_validate_target_outputs_rejects_corrupted_normalized_value(tmp_path: Pa
     _rewrite_summary_values(output_dir / "summaries" / "image_level_summary.csv", updates)
     _rewrite_summary_values(output_dir / "summaries" / "well_level_summary.csv", updates)
 
-    with pytest.raises(ValueError, match="normalized intensity"):
+    with pytest.raises(ValueError, match="target_integrated_intensity_per_DAPI_positive_nucleus"):
         validate_target_outputs(output_dir)
 
 

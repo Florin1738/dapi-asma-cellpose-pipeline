@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 import tifffile
+import yaml
 
 from dapi_norm.target_normalization import run_target_normalization
 
@@ -82,7 +83,12 @@ def test_run_target_normalization_writes_visual_qc_artifacts(tmp_path: Path):
     assert (output_dir / "plots" / "normalized_intensity_by_well.png").exists()
     assert (output_dir / "plots" / "target_integrated_vs_nucleus_count.png").exists()
     assert (output_dir / "qc_contact_sheet.png").exists()
-    assert (output_dir / "logs" / "config_resolved.yaml").exists()
+    config_path = output_dir / "logs" / "config_resolved.yaml"
+    assert config_path.exists()
+    config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    assert "normalization" not in config["measurement"]
+    assert config["measurement"]["primary_endpoint"] == "target_integrated_intensity_per_DAPI_positive_nucleus"
+    assert config["measurement"]["denominator"] == "filtered_DAPI_positive_nucleus_count"
 
 
 def test_run_target_normalization_rejects_counts_from_wrong_channel(tmp_path: Path):

@@ -62,6 +62,41 @@ def test_run_nuclei_count_batch_writes_masks_qc_and_tables_with_fake_segmenter(t
     assert config["image_inputs"][0]["extracted_plane_shape"] == [24, 24]
 
 
+def test_run_nuclei_count_batch_records_confirmed_channel_identity(tmp_path: Path):
+    input_root = tmp_path / "dataset"
+    xy01 = input_root / "sample_02" / "XY01"
+    xy01.mkdir(parents=True)
+    image = np.zeros((12, 12), dtype=np.uint16)
+    image[3:6, 4:7] = 2000
+    tifffile.imwrite(xy01 / "sample_XY01_CH4.tif", image)
+
+    def fake_segmenter(_image: np.ndarray) -> np.ndarray:
+        labels = np.zeros((12, 12), dtype=np.uint16)
+        labels[3:6, 4:7] = 1
+        return labels
+
+    output_dir = tmp_path / "out"
+    summaries = run_nuclei_count_batch(
+        input_root=input_root,
+        output_dir=output_dir,
+        channel_id="CH4",
+        model_name="fake_model",
+        segmenter=fake_segmenter,
+        channel_identity_confirmed=True,
+    )
+
+    assert summaries[0]["channel_identity_confirmed"] is True
+    assert summaries[0]["warnings"] == ""
+    counts_csv = (output_dir / "summaries" / "nucleus_counts.csv").read_text(encoding="utf-8")
+    assert "candidate_DAPI,True,1" in counts_csv
+    assert "channel_identity_unconfirmed" not in counts_csv
+    config = yaml.safe_load((output_dir / "logs" / "config_resolved.yaml").read_text())
+    assert config["channel_identity_confirmed"] is True
+    assert config["image_inputs"][0]["channel_identity_confirmed"] is True
+    run_log = (output_dir / "logs" / "run_log.txt").read_text(encoding="utf-8")
+    assert "channel_identity_confirmed: true" in run_log
+
+
 def test_run_nuclei_count_batch_rejects_wrong_shape_segmenter_output(tmp_path: Path):
     input_root = tmp_path / "dataset"
     xy01 = input_root / "sample_02" / "XY01"

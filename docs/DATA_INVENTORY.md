@@ -2,13 +2,25 @@
 
 Inventory date: 2026-06-22.
 
-This repository currently contains a local data folder:
+## Current Plate Data
+
+The active plate data are under:
+
+```text
+data/aSMA_DAPI_plates/
+```
+
+This folder contains Plate 1 and Plate 2 microscopy images organized by plate, acquisition folder, `XY##` field, and channel TIFF. CH2 is confirmed as alpha-smooth muscle actin (aSMA), and CH4 is confirmed as DAPI for the current workflow.
+
+## Legacy Sample Folder
+
+The repository also contains an older local sample folder:
 
 ```text
 ApYYM20AGGSMA_02/
 ```
 
-The folder is ignored by git and should remain uncommitted.
+Both data locations are ignored by git and should remain uncommitted.
 
 ## Basic Counts
 

@@ -46,6 +46,7 @@ def summarize_labeled_mask(
     model_name: str,
     channel_id: str,
     candidate_stain: str,
+    channel_identity_confirmed: bool = False,
     mask_path: Path | None = None,
     qc_montage_path: Path | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
@@ -82,11 +83,11 @@ def summarize_labeled_mask(
         "model_name": model_name,
         "channel_id": channel_id,
         "candidate_stain": candidate_stain,
-        "channel_identity_confirmed": False,
+        "channel_identity_confirmed": channel_identity_confirmed,
         "nucleus_count": len(nucleus_rows),
         "mask_path": "" if mask_path is None else str(mask_path),
         "qc_montage_path": "" if qc_montage_path is None else str(qc_montage_path),
-        "warnings": "channel_identity_unconfirmed",
+        "warnings": "" if channel_identity_confirmed else "channel_identity_unconfirmed",
     }
     return summary, nucleus_rows
 

@@ -1,6 +1,9 @@
 .DS_Store
 .venv/
+.cellprofiler-arm64/
 __pycache__/
+node_modules/
+scripts/node_modules
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
@@ -10,12 +13,22 @@ htmlcov/
 dist/
 build/
 *.egg-info/
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.xlsm
+*.docx
+*.pdf
+*.ndjson
 
 # Local image-analysis outputs and model caches
 output/
 outputs/
 docs/assets/data_inventory/
 data/
+manual_validation/
+reports/
 *.ome.tif
 *.ome.tiff
 *.tif
@@ -35,3 +48,30 @@ ApYYM20AGGSMA_02/**
 # Keep intentionally small examples/configs in git; real microscopy data stays out.
 !examples/
 !configs/
+!data/
+!data/README.md
+!output/
+!output/README.md
+!manual_validation/
+!manual_validation/README.md
+!reports/
+!reports/README.md
+!reports/**/
+!reports/**/README.md
+
+# Re-hide all local data/output/validation contents after directory exceptions;
+# only the folder-level README files above should surface in git status.
+data/**
+!data/
+!data/README.md
+output/**
+!output/
+!output/README.md
+manual_validation/**
+!manual_validation/
+!manual_validation/README.md
+reports/**
+!reports/
+!reports/README.md
+!reports/**/
+!reports/**/README.md
