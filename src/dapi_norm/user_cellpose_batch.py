@@ -392,7 +392,7 @@ def _build_acquisition(
     run_name = _safe_name(acquisition_root.name)
     try:
         relative_name = acquisition_root.relative_to(input_root)
-        display_name = acquisition_root.name if relative_name == Path(".") else str(relative_name)
+        display_name = acquisition_root.name if relative_name == Path(".") else relative_name.as_posix()
     except ValueError:
         display_name = acquisition_root.name
     return AcquisitionRun(

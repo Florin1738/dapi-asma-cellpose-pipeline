@@ -9,6 +9,7 @@ import tifffile
 import yaml
 
 from dapi_norm.image_arrays import read_primary_intensity_plane
+from dapi_norm.path_contract import to_posix_path
 
 CELLPOSE_PLATE_SUMMARY_COLUMNS = [
     "plate",
@@ -221,16 +222,20 @@ def _summary_row(
         "qc_status": metric_row.get("qc_status", ""),
         "qc_flags": metric_row.get("qc_flags", ""),
         "source_warnings": metric_row.get("warnings", ""),
-        "cellpose_mask_path": str(_resolve_reference(metric_row.get("mask_path", ""), run_dir)),
-        "dapi_nuclei_mask_path": str(_resolve_reference(metric_row.get("nuclei_mask_path", ""), run_dir)),
+        "cellpose_mask_path": to_posix_path(
+            _resolve_reference(metric_row.get("mask_path", ""), run_dir)
+        ),
+        "dapi_nuclei_mask_path": to_posix_path(
+            _resolve_reference(metric_row.get("nuclei_mask_path", ""), run_dir)
+        ),
         "source_qc_panel_path": _resolve_optional_reference(metric_row.get("qc_panel_path", ""), run_dir),
         "source_excluded_signal_check_path": _resolve_optional_reference(
             metric_row.get("excluded_signal_check_path", ""), run_dir
         ),
-        "target_path": str(ch2_path),
-        "dapi_path": str(ch4_path),
-        "ch2_path": str(ch2_path),
-        "ch4_path": str(ch4_path),
+        "target_path": to_posix_path(ch2_path),
+        "dapi_path": to_posix_path(ch4_path),
+        "ch2_path": to_posix_path(ch2_path),
+        "ch4_path": to_posix_path(ch4_path),
     }
 
 
@@ -244,7 +249,7 @@ def _read_yaml(path: Path) -> dict[str, Any]:
 
 
 def _source_id(run_name: str, metric_row: dict[str, str]) -> str:
-    raw_source_id = metric_row.get("source_id") or metric_row["image_id"]
+    raw_source_id = to_posix_path(metric_row.get("source_id") or metric_row["image_id"])
     if "/" in raw_source_id:
         return raw_source_id
     return f"{run_name}/{raw_source_id}"
@@ -280,7 +285,7 @@ def _resolve_reference(value: str, base_dir: Path) -> Path:
 def _resolve_optional_reference(value: str, base_dir: Path) -> str:
     if not value:
         return ""
-    return str(_resolve_reference(value, base_dir))
+    return to_posix_path(_resolve_reference(value, base_dir))
 
 
 def _whole_field_raw_ch2(path: Path) -> float:

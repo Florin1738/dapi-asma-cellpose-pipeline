@@ -13,6 +13,7 @@ import tifffile
 from skimage import segmentation
 
 from dapi_norm.image_arrays import read_primary_intensity_plane
+from dapi_norm.path_contract import to_posix_path
 from dapi_norm.user_cellpose_batch import discover_acquisitions
 from dapi_norm.pi_simple_summary import find_image_pairs
 
@@ -136,10 +137,10 @@ def discover_ecm_records(
             records.append(
                 EcmImageRecord(
                     acquisition_rel=acquisition_rel,
-                    acquisition_name=acquisition.display_name,
+                    acquisition_name=to_posix_path(acquisition.display_name),
                     acquisition_slug=slug,
                     location=pair.location,
-                    source_id=f"{acquisition.display_name}/{pair.location}",
+                    source_id=f"{to_posix_path(acquisition.display_name)}/{pair.location}",
                     ecm_path=pair.target_path.resolve(),
                     dapi_path=pair.dapi_path.resolve(),
                 )

@@ -7,6 +7,8 @@ import os
 from pathlib import Path
 import shlex
 
+from dapi_norm.path_contract import to_posix_path
+
 
 def render_manual_annotation_gallery(*, package_dir: Path, output_dir: Path) -> dict[str, Path]:
     package_path = Path(package_dir)
@@ -264,7 +266,7 @@ def _resolve_path(value: str, *, package_dir: Path) -> Path:
 
 
 def _relative_href(path: Path, *, output_dir: Path) -> str:
-    return os.path.relpath(path.resolve(), start=output_dir.resolve())
+    return to_posix_path(os.path.relpath(path.resolve(), start=output_dir.resolve()))
 
 
 def _image_id(row: dict[str, str]) -> str:

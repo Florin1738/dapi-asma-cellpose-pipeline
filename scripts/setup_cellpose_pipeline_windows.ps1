@@ -32,8 +32,15 @@ function Find-Uv {
             return $candidate
         }
     }
+    # Prefer the Windows executable explicitly.  On machines with Git Bash,
+    # `uv` can resolve to a Unix shell shim that PowerShell cannot execute.
+    $command = Get-Command uv.exe -ErrorAction SilentlyContinue
+    if ($command -and $command.CommandType -eq "Application") {
+        return $command.Source
+    }
     $command = Get-Command uv -ErrorAction SilentlyContinue
-    if ($command) {
+    if ($command -and $command.CommandType -eq "Application" -and
+        [IO.Path]::GetExtension($command.Source) -eq ".exe") {
         return $command.Source
     }
     return $null
