@@ -148,6 +148,20 @@ def test_pi_style_workbook_from_rows_is_standalone_xlsx(tmp_path: Path):
     assert 'IF(C2&gt;0,B2/C2,"")' in sheet_xml
 
 
+def test_pi_style_workbook_expands_location_column_for_long_source_ids(tmp_path: Path):
+    long_location_row = _fake_summary_row()
+    long_location_row["source_id"] = "0087cTW_01/XY82"
+    workbook_path = write_pi_style_workbook_from_rows(
+        tmp_path / "summary.xlsx",
+        [long_location_row],
+    )
+
+    with ZipFile(workbook_path) as zf:
+        sheet_xml = zf.read("xl/worksheets/sheet1.xml").decode("utf-8")
+
+    assert '<col min="1" max="1" width="17" customWidth="1"/>' in sheet_xml
+
+
 def _touch_pair(xy_dir: Path, stem: str) -> None:
     xy_dir.mkdir(parents=True)
     (xy_dir / f"{stem}_CH2.tif").touch()

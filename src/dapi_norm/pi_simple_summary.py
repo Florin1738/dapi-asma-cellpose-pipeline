@@ -382,6 +382,7 @@ def _sheet_xml(rows: list[PiSummaryRow]) -> str:
         row_xml.append(_data_row_xml(row_index, values, formula=formula, cached_ratio=row.ratio))
 
     dimension_last_row = max(len(rows) + 1, 1)
+    location_column_width = max([14, *(len(row.location) + 2 for row in rows)])
     return (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
@@ -391,7 +392,7 @@ def _sheet_xml(rows: list[PiSummaryRow]) -> str:
         '<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/>'
         "</sheetView></sheetViews>"
         '<sheetFormatPr defaultRowHeight="15"/>'
-        '<cols><col min="1" max="1" width="14" customWidth="1"/>'
+        f'<cols><col min="1" max="1" width="{location_column_width}" customWidth="1"/>'
         '<col min="2" max="2" width="20" customWidth="1"/>'
         '<col min="3" max="3" width="14" customWidth="1"/>'
         '<col min="4" max="4" width="18" customWidth="1"/></cols>'
