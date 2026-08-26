@@ -76,6 +76,8 @@ logs/user_cellpose_batch_run.yaml
 
 Every analysis run is expected to produce visual QC overlays before results are considered reviewable. Visual QC is qualitative only; precision, recall, F1, false positives, and false negatives require manual ground truth.
 
+When every acquisition must receive its own isolated workbook and QC bundle, use the bounded concurrent per-acquisition runner documented in [`docs/PARALLEL_PER_ACQUISITION_RUNNER.md`](docs/PARALLEL_PER_ACQUISITION_RUNNER.md). It defaults to one worker and supports a controlled two-worker GPU benchmark without changing the scientific workflow.
+
 ## Scientific Scope
 
 - The pipeline computes auditable image-analysis metrics.
