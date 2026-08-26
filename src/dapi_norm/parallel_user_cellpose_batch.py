@@ -17,7 +17,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, TextIO
 
-from dapi_norm.user_cellpose_batch import discover_acquisitions
+from dapi_norm.user_cellpose_batch import AcquisitionRun, discover_acquisitions
 
 
 STANDARD_WORKBOOK_RELATIVE_PATH = Path(
@@ -84,6 +84,7 @@ def build_per_acquisition_runs(
     max_images_per_acquisition: int | None = None,
     render_figures: bool = True,
     max_overlay_images: int | None = None,
+    acquisition_selectors: list[str] | None = None,
 ) -> list[PerAcquisitionRun]:
     """Discover input acquisitions and construct one non-overlapping run each.
 
@@ -105,6 +106,7 @@ def build_per_acquisition_runs(
             "No valid acquisition folders were found. Expected XY folders containing "
             f"paired {target_channel_id} and {dapi_channel_id} TIFF files."
         )
+    acquisitions = _select_acquisitions(acquisitions, acquisition_selectors)
 
     logs_root = output_path / ORCHESTRATION_DIRECTORY_NAME / "logs"
     runs: list[PerAcquisitionRun] = []
@@ -147,6 +149,43 @@ def build_per_acquisition_runs(
             )
         )
     return runs
+
+
+def _select_acquisitions(
+    acquisitions: list[AcquisitionRun], selectors: list[str] | None
+) -> list[AcquisitionRun]:
+    """Return exact requested acquisitions while retaining natural discovery order."""
+
+    if not selectors:
+        return acquisitions
+    selected: list[AcquisitionRun] = []
+    seen_roots: set[Path] = set()
+    for selector in selectors:
+        normalized = selector.replace("\\", "/").strip().casefold()
+        matches = [
+            acquisition
+            for acquisition in acquisitions
+            if normalized
+            in {
+                acquisition.display_name.replace("\\", "/").casefold(),
+                acquisition.input_root.name.casefold(),
+            }
+        ]
+        if not matches:
+            available = ", ".join(acquisition.display_name for acquisition in acquisitions)
+            raise ValueError(
+                f"Requested acquisition {selector!r} was not found. Available acquisitions: {available}"
+            )
+        if len(matches) > 1:
+            choices = ", ".join(acquisition.display_name for acquisition in matches)
+            raise ValueError(
+                f"Requested acquisition {selector!r} is ambiguous. Use one of: {choices}"
+            )
+        match = matches[0]
+        if match.input_root not in seen_roots:
+            selected.append(match)
+            seen_roots.add(match.input_root)
+    return selected
 
 
 def validate_new_output_root(output_root: Path | str, runs: list[PerAcquisitionRun]) -> None:

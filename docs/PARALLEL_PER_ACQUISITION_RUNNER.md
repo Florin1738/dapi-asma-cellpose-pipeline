@@ -79,6 +79,15 @@ two workers for production only if both runs complete on CUDA, visual QC is
 acceptable, and throughput improves. Keep `--workers 1` if GPU-memory pressure,
 errors, or negligible speed-up are observed.
 
+Add `--acquisition "<exact folder name>"` once for each folder in a small,
+restartable batch. The option selects only exact acquisition-folder or relative
+display names and rejects an ambiguous or unknown name. For example:
+
+```powershell
+  --acquisition "003-7b TW aSMA" `
+  --acquisition "0037a a-SMA TW"
+```
+
 ## Production command
 
 After the benchmark is accepted, use a different, empty production output root

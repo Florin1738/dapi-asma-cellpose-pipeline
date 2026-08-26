@@ -55,6 +55,36 @@ def test_validate_new_output_root_refuses_mixed_results(tmp_path: Path):
         validate_new_output_root(output_root, [run])
 
 
+def test_build_per_acquisition_runs_selects_only_exact_requested_acquisitions(tmp_path: Path):
+    input_root = tmp_path / "inputs"
+    _touch_pair(input_root / "run a" / "XY01", "RunA_XY01")
+    _touch_pair(input_root / "run b" / "XY02", "RunB_XY02")
+
+    runs = build_per_acquisition_runs(
+        input_root=input_root,
+        output_root=tmp_path / "outputs",
+        python_executable=tmp_path / "python.exe",
+        runner_script=tmp_path / "run_user_cellpose_batch.py",
+        acquisition_selectors=["run b"],
+    )
+
+    assert [run.display_name for run in runs] == ["run b"]
+
+
+def test_build_per_acquisition_runs_rejects_unknown_acquisition_selector(tmp_path: Path):
+    input_root = tmp_path / "inputs"
+    _touch_pair(input_root / "run a" / "XY01", "RunA_XY01")
+
+    with pytest.raises(ValueError, match="not found"):
+        build_per_acquisition_runs(
+            input_root=input_root,
+            output_root=tmp_path / "outputs",
+            python_executable=tmp_path / "python.exe",
+            runner_script=tmp_path / "run_user_cellpose_batch.py",
+            acquisition_selectors=["run missing"],
+        )
+
+
 def test_execute_parallel_runs_starts_two_children_before_polling(tmp_path: Path, monkeypatch):
     output_root = tmp_path / "outputs"
     runs = [_run_spec(output_root, "one"), _run_spec(output_root, "two")]

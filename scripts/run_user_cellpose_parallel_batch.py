@@ -54,6 +54,11 @@ def main(
         "--max-images-per-acquisition",
         help="Optional per-folder cap for a controlled benchmark/smoke test.",
     ),
+    acquisition: list[str] | None = typer.Option(
+        None,
+        "--acquisition",
+        help="Exact acquisition folder name or relative display name. Repeat to form a small batch.",
+    ),
     render_figures: bool = typer.Option(True, "--render-figures/--skip-figures"),
     max_overlay_images: int | None = typer.Option(None, "--max-overlay-images"),
     continue_on_error: bool = typer.Option(
@@ -84,6 +89,7 @@ def main(
         max_images_per_acquisition=max_images_per_acquisition,
         render_figures=render_figures,
         max_overlay_images=max_overlay_images,
+        acquisition_selectors=acquisition,
     )
     typer.echo(f"Planned {len(runs)} isolated acquisition run(s); workers={workers}.")
     for run in runs:
