@@ -67,7 +67,7 @@ Each run creates a timestamped output folder. Start with:
 
 ```text
 final/START_HERE_RUN_SUMMARY.html
-final/workbooks/cellpose_background_corrected_pi_style_summary.xlsx
+final/workbooks/aSMA Quantification Workbook - <assay folder>.xlsx
 final/tables/cellpose_user_friendly_endpoint_summary.csv
 final/tables/cellpose_full_plate_endpoint_summary.csv
 final/figures/

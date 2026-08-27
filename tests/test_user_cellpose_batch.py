@@ -4,6 +4,7 @@ import csv
 from pathlib import Path
 from zipfile import ZipFile
 
+import pytest
 import yaml
 
 from dapi_norm.user_cellpose_batch import (
@@ -12,6 +13,8 @@ from dapi_norm.user_cellpose_batch import (
     _pairs_for_acquisition,
     _prepare_output_root,
     discover_acquisitions,
+    user_facing_workbook_filename,
+    workbook_filename_for_assay_folder,
     write_pi_style_workbook_from_rows,
     write_user_summary_csv,
 )
@@ -74,6 +77,35 @@ def test_discover_acquisitions_accepts_explicit_channel_mapping(tmp_path: Path):
     assert pairs[0].dapi_channel_id == "CH4"
     assert pairs[0].ch2_path.name.endswith("_CH2.tif")
     assert pairs[0].ch4_path.name.endswith("_CH4.tif")
+
+
+def test_user_facing_workbook_filename_uses_assay_folder_name(tmp_path: Path):
+    assay_root = tmp_path / "003-7b TW aSMA"
+    _touch_pair(assay_root / "XY01", "RunA_XY01")
+
+    acquisition = discover_acquisitions(assay_root)[0]
+
+    assert user_facing_workbook_filename([acquisition]) == (
+        "aSMA Quantification Workbook - 003-7b TW aSMA.xlsx"
+    )
+
+
+def test_user_facing_workbook_filename_marks_combined_runs_and_sanitizes_invalid_characters(
+    tmp_path: Path,
+):
+    _touch_pair(tmp_path / "Run A" / "XY01", "RunA_XY01")
+    _touch_pair(tmp_path / "Run B" / "XY01", "RunB_XY01")
+
+    acquisitions = discover_acquisitions(tmp_path)
+
+    assert user_facing_workbook_filename(acquisitions) == (
+        "aSMA Quantification Workbook - Combined 2 Assays.xlsx"
+    )
+    assert workbook_filename_for_assay_folder('assay:01/CH2') == (
+        "aSMA Quantification Workbook - assay_01_CH2.xlsx"
+    )
+    with pytest.raises(ValueError, match="valid workbook filename"):
+        workbook_filename_for_assay_folder(". ")
 
 
 def test_acquisition_log_record_is_yaml_serializable(tmp_path: Path):

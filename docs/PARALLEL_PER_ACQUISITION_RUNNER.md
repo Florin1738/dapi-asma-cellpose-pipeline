@@ -27,7 +27,7 @@ Choose a new output root. For each acquisition, the runner creates:
   Plate_1/
     <acquisition>/
       final/
-        workbooks/cellpose_background_corrected_pi_style_summary.xlsx
+        workbooks/aSMA Quantification Workbook - <assay folder>.xlsx
         tables/
         figures/
       cellpose_counts/
@@ -36,9 +36,11 @@ Choose a new output root. For each acquisition, the runner creates:
 ```
 
 The workbook, QC figures, masks, method parameters, and child log remain
-isolated under that acquisition's output directory. The orchestration manifest
-records the exact child command, source folder, channel mapping, status,
-duration, expected workbook path, and log location for every acquisition.
+isolated under that acquisition's output directory. Each isolated workbook is
+named `aSMA Quantification Workbook - <assay folder>.xlsx`. The orchestration
+manifest records the exact child command, source folder, channel mapping,
+status, duration, expected workbook path, and log location for every
+acquisition.
 
 The runner refuses a non-empty output root so a benchmark or production run
 cannot silently mix with previous results.

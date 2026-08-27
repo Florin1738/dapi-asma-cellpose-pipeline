@@ -198,10 +198,10 @@ traceability and QC; they should not be used for polished user-facing Cellpose
 endpoint plots or workbooks unless a future request explicitly asks for a
 method-comparison analysis.
 
-The active polished Excel workbook is:
+The active polished Excel workbook for one assay folder is:
 
 ```text
-reports/cellpose_ch2_ch4_full_plate/workbooks/cellpose_background_corrected_pi_style_summary.xlsx
+reports/cellpose_ch2_ch4_full_plate/workbooks/aSMA Quantification Workbook - <assay folder>.xlsx
 ```
 
 It contains one sheet per plate and presents `LOCATION`, Cellpose

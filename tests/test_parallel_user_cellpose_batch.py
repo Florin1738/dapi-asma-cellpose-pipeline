@@ -118,7 +118,15 @@ def test_execute_parallel_runs_starts_two_children_before_polling(tmp_path: Path
     assert manifest["status"] == "completed"
     assert manifest["workers"] == 2
     assert [entry["status"] for entry in manifest["runs"]] == ["succeeded", "succeeded"]
+    assert all(
+        Path(entry["expected_workbook_path"]).name
+        == "aSMA Quantification Workbook - input.xlsx"
+        for entry in manifest["runs"]
+    )
     assert result.summary_path.read_text(encoding="utf-8").count("succeeded") == 2
+    assert "aSMA Quantification Workbook - input.xlsx" in result.summary_path.read_text(
+        encoding="utf-8"
+    )
     assert all(run.log_path.exists() for run in runs)
 
 

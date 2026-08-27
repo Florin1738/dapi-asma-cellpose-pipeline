@@ -29,6 +29,7 @@ PRIMARY_ENDPOINT = "target_integrated_intensity_per_DAPI_positive_nucleus"
 PRIMARY_SOURCE_COLUMN = (
     "dapi_anchored_cellpose_target_integrated_background_corrected_per_DAPI_positive_nucleus"
 )
+USER_FACING_WORKBOOK_PREFIX = "aSMA Quantification Workbook"
 USER_SUMMARY_COLUMNS = [
     "plate",
     "location",
@@ -250,7 +251,7 @@ def run_user_cellpose_batch(
         rows,
     )
     workbook_path = write_pi_style_workbook_from_rows(
-        workbook_root / "cellpose_background_corrected_pi_style_summary.xlsx",
+        workbook_root / user_facing_workbook_filename(acquisitions),
         rows,
     )
 
@@ -315,6 +316,26 @@ def write_user_summary_csv(path: Path | str, rows: Iterable[dict[str, Any]]) -> 
         for row in rows:
             writer.writerow(_user_summary_row(row))
     return output_path
+
+
+def workbook_filename_for_assay_folder(assay_folder: str) -> str:
+    """Return the clear user-facing workbook filename for one assay folder."""
+
+    safe_folder = re.sub(r'[<>:"/\\|?*\x00-\x1F]', "_", assay_folder).strip().rstrip(". ")
+    if safe_folder in {"", ".", ".."}:
+        raise ValueError("Assay folder name cannot produce a valid workbook filename.")
+    return f"{USER_FACING_WORKBOOK_PREFIX} - {safe_folder}.xlsx"
+
+
+def user_facing_workbook_filename(acquisitions: Iterable[AcquisitionRun]) -> str:
+    """Name a workbook for its assay folder, or clearly label a combined run."""
+
+    acquisition_list = list(acquisitions)
+    if not acquisition_list:
+        raise ValueError("At least one acquisition is required to name a workbook.")
+    if len(acquisition_list) == 1:
+        return workbook_filename_for_assay_folder(acquisition_list[0].input_root.name)
+    return f"{USER_FACING_WORKBOOK_PREFIX} - Combined {len(acquisition_list)} Assays.xlsx"
 
 
 def write_pi_style_workbook_from_rows(path: Path | str, rows: Iterable[dict[str, Any]]) -> Path:

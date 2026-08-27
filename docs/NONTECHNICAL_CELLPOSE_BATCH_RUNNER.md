@@ -104,7 +104,7 @@ The user-facing outputs are in `final/`:
 - `START_HERE_RUN_SUMMARY.html`: plain-language run summary.
 - `tables/cellpose_user_friendly_endpoint_summary.csv`: compact table with the primary endpoint.
 - `tables/cellpose_full_plate_endpoint_summary.csv`: full audit table.
-- `workbooks/cellpose_background_corrected_pi_style_summary.xlsx`: simple Excel workbook for the run. The filename is retained for compatibility; current values are raw retained target-channel/aSMA integrated intensity because `background_value_per_px = 0.0`. The workbook includes a `Channel Mapping` sheet that records which channel was used for DAPI and which was used for the target.
+- `workbooks/aSMA Quantification Workbook - <assay folder>.xlsx`: simple Excel workbook for a single-assay run. The filename is intentionally short and identifies the assay folder. Current values are raw retained target-channel/aSMA integrated intensity because `background_value_per_px = 0.0`. The workbook includes a `Channel Mapping` sheet that records which channel was used for DAPI and which was used for the target. A combined run is named `aSMA Quantification Workbook - Combined <count> Assays.xlsx`.
 - `figures/`: visual QC overlays and endpoint plots, when figure rendering is enabled.
 
 Intermediate masks, per-image QC panels, and logs are also retained:

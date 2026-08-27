@@ -398,8 +398,12 @@ The runner does not introduce a new segmentation threshold. It packages the
 current Cellpose method into one folder-picking workflow and writes the same
 auditable logs, masks, CSVs, and QC overlays.
 
-The generated workbook filename retains `background_corrected` for compatibility
-with the current report package. Current runner defaults use
+The generated workbook filename is intentionally user-facing:
+`aSMA Quantification Workbook - <assay folder>.xlsx`. It does not describe the
+implementation details in its filename. The scientific measurement definition
+and channel mapping remain recorded in the workbook metadata and run logs for
+traceability.
+Current runner defaults use
 `background_value_per_px = 0.0`, so no scalar background is subtracted.
 
 ### DAPI-Seeded aSMA-Associated Region Segmentation

@@ -17,12 +17,13 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, TextIO
 
-from dapi_norm.user_cellpose_batch import AcquisitionRun, discover_acquisitions
-
-
-STANDARD_WORKBOOK_RELATIVE_PATH = Path(
-    "final/workbooks/cellpose_background_corrected_pi_style_summary.xlsx"
+from dapi_norm.user_cellpose_batch import (
+    AcquisitionRun,
+    discover_acquisitions,
+    workbook_filename_for_assay_folder,
 )
+
+
 ORCHESTRATION_DIRECTORY_NAME = "_orchestration"
 
 
@@ -436,7 +437,7 @@ def _record_to_json(record: PerAcquisitionRunRecord) -> dict[str, Any]:
         "image_count": record.run.image_count,
         "command": list(record.run.command),
         "log_path": str(record.run.log_path),
-        "expected_workbook_path": str(record.run.output_root / STANDARD_WORKBOOK_RELATIVE_PATH),
+        "expected_workbook_path": str(_expected_workbook_path(record.run)),
         "status": record.status,
         "return_code": record.return_code,
         "started_at_utc": record.started_at_utc,
@@ -444,6 +445,14 @@ def _record_to_json(record: PerAcquisitionRunRecord) -> dict[str, Any]:
         "duration_seconds": record.duration_seconds,
         "error": record.error,
     }
+
+
+def _expected_workbook_path(run: PerAcquisitionRun) -> Path:
+    """Return the deterministic user-facing workbook path for an isolated run."""
+
+    return run.output_root / "final" / "workbooks" / workbook_filename_for_assay_folder(
+        run.input_root.name
+    )
 
 
 def _summary_markdown(
@@ -462,7 +471,7 @@ def _summary_markdown(
         "| --- | ---: | --- | --- | --- |",
     ]
     for record in records:
-        workbook = record.run.output_root / STANDARD_WORKBOOK_RELATIVE_PATH
+        workbook = _expected_workbook_path(record.run)
         lines.append(
             "| {name} | {count} | {status} | `{workbook}` | `{log}` |".format(
                 name=record.run.display_name.replace("|", "\\|"),
