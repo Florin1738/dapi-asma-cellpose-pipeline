@@ -10,6 +10,7 @@ import yaml
 
 from dapi_norm.image_arrays import read_primary_intensity_plane
 from dapi_norm.path_contract import to_posix_path
+from dapi_norm.well_mapping import MAPPING_COLUMNS
 
 CELLPOSE_PLATE_SUMMARY_COLUMNS = [
     "plate",
@@ -55,6 +56,7 @@ CELLPOSE_PLATE_SUMMARY_COLUMNS = [
     "dapi_path",
     "ch2_path",
     "ch4_path",
+    *MAPPING_COLUMNS,
 ]
 
 

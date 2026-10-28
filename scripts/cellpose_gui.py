@@ -466,6 +466,7 @@ class PipelineGUI:
             try:
                 sys.path.insert(0, str(self.project_dir / "src"))
                 from dapi_norm.user_cellpose_batch import discover_acquisitions
+                from dapi_norm.well_mapping import mapping_for_acquisitions
 
                 acqs = discover_acquisitions(
                     input_root,
@@ -473,10 +474,11 @@ class PipelineGUI:
                     dapi_channel_id=dapi_channel,
                 )
                 pairs = sum(a.image_count for a in acqs)
+                mapping_for_acquisitions(acqs)
                 if acqs:
                     msg = (
                         f"Found {len(acqs)} acquisition folder(s), {pairs} "
-                        f"{target_channel}/{dapi_channel} image pair(s)."
+                        f"{target_channel}/{dapi_channel} image pair(s); well markers verified."
                     )
                 else:
                     msg = f"No {target_channel}/{dapi_channel} image pairs found in that folder."

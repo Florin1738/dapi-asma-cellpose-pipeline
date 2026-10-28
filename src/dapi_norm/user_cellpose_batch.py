@@ -24,6 +24,10 @@ from dapi_norm.cellpose_runner import run_nuclei_count_batch
 from dapi_norm.pi_simple_summary import ImagePair, PiSummaryRow, find_image_pairs, write_pi_workbook
 from dapi_norm.pi_simple_summary import _normalize_channel_id
 from dapi_norm.seeded_regions import load_mask_lookup_from_counts_root
+from dapi_norm.well_mapping import (
+    MAPPING_COLUMNS, attach_mapping, mapping_for_acquisitions, write_mapping_artifacts,
+    validate_mapping_rows,
+)
 
 PRIMARY_ENDPOINT = "target_integrated_intensity_per_DAPI_positive_nucleus"
 PRIMARY_SOURCE_COLUMN = (
@@ -49,6 +53,7 @@ USER_SUMMARY_COLUMNS = [
     "dapi_path",
     "ch2_path",
     "ch4_path",
+    *MAPPING_COLUMNS,
 ]
 SKIP_DIR_NAMES = {
     ".git",
@@ -162,6 +167,7 @@ def run_user_cellpose_batch(
     render_figures: bool = True,
     max_overlay_images: int | None = None,
     overwrite: bool = False,
+    plate_map: Path | str | None = None,
 ) -> BatchRunResult:
     project_path = Path(project_root).resolve() if project_root is not None else _project_root()
     input_path = Path(input_root).expanduser().resolve()
@@ -170,8 +176,6 @@ def run_user_cellpose_batch(
     dapi_channel = _normalize_channel_id(dapi_channel_id)
     if target_channel == dapi_channel:
         raise ValueError("Target and DAPI channels must be different.")
-    _prepare_output_root(output_path, overwrite=overwrite)
-    _configure_model_cache(project_path, model_name)
 
     acquisitions = discover_acquisitions(
         input_path,
@@ -180,6 +184,9 @@ def run_user_cellpose_batch(
     )
     if max_images_per_acquisition is not None and max_images_per_acquisition <= 0:
         raise ValueError("--max-images-per-acquisition must be positive when provided.")
+    mappings = mapping_for_acquisitions(acquisitions, Path(plate_map) if plate_map else None)
+    _prepare_output_root(output_path, overwrite=overwrite)
+    _configure_model_cache(project_path, model_name)
 
     counts_root = output_path / "cellpose_counts"
     regions_root = output_path / "cellpose_cell_regions"
@@ -238,6 +245,8 @@ def run_user_cellpose_batch(
     workbook_root.mkdir(parents=True, exist_ok=True)
 
     rows = build_cellpose_plate_summary(regions_root)
+    attach_mapping(rows, mappings)
+    write_mapping_artifacts(table_root, mappings)
     full_summary_csv = write_cellpose_plate_summary_csv(
         table_root / "cellpose_full_plate_endpoint_summary.csv",
         rows,
@@ -341,6 +350,7 @@ def user_facing_workbook_filename(acquisitions: Iterable[AcquisitionRun]) -> str
 def write_pi_style_workbook_from_rows(path: Path | str, rows: Iterable[dict[str, Any]]) -> Path:
     output_path = Path(path)
     row_list = list(rows)
+    validate_mapping_rows(row_list)
     grouped: dict[str, list[PiSummaryRow]] = {}
     for row in row_list:
         plate = str(row["plate"])
@@ -356,9 +366,15 @@ def write_pi_style_workbook_from_rows(path: Path | str, rows: Iterable[dict[str,
                 ),
                 nuclei_count=int(row["dapi_positive_nucleus_count"]),
                 source_id=str(row["source_id"]),
+                well_id=str(row["well_id"]),
+                field_in_well=int(row["field_in_well"]),
+                fields_in_well=int(row["fields_in_well"]),
+                treatment_mapping_status=str(row["treatment_mapping_status"]),
+                qc_status=str(row.get("qc_status", "")),
             )
         )
-    write_pi_workbook(output_path, grouped, metadata=_workbook_metadata(row_list))
+    write_pi_workbook(output_path, grouped, metadata=_workbook_metadata(row_list),
+                      mapping_rows=row_list)
     return output_path
 
 
@@ -377,6 +393,8 @@ def _workbook_metadata(rows: list[dict[str, Any]]) -> dict[str, str] | None:
         ),
         "target_path_column": "target_path",
         "dapi_path_column": "dapi_path",
+        "well_mapping": "verified microscope markers; see Well Mapping sheet",
+        "treatment_mapping_status": ", ".join(sorted({str(row.get("treatment_mapping_status", "not_provided")) for row in rows})),
     }
 
 
@@ -522,6 +540,7 @@ def _project_root() -> Path:
 
 def _user_summary_row(row: dict[str, Any]) -> dict[str, Any]:
     return {
+        **{name: row.get(name, "") for name in MAPPING_COLUMNS},
         "plate": row["plate"],
         "location": row["location"],
         "source_id": row["source_id"],
@@ -715,6 +734,10 @@ def _run_summary_markdown(
         f"- Target/aSMA measurement channel: `{target_channel_id}`\n"
         f"- DAPI nuclei segmentation/count channel: `{dapi_channel_id}`\n\n"
         f"{acquisition_lines}\n\n"
+        "## Well Mapping\n\n"
+        "- Well identities are read from microscope markers, never inferred from XY order.\n"
+        "- See tables/image_to_well.csv and mapping_validation.json. Repeated fields remain separate.\n"
+        f"- Treatment mapping status: {', '.join(sorted({str(row.get('treatment_mapping_status', 'not_provided')) for row in rows}))}\n\n"
         "## Main Outputs\n\n"
         f"- User-friendly CSV: `{outputs.user_summary_csv}`\n"
         f"- Full audit CSV: `{outputs.full_summary_csv}`\n"

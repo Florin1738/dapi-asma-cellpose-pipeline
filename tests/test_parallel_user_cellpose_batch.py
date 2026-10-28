@@ -191,3 +191,4 @@ def _touch_pair(xy_dir: Path, stem: str) -> None:
     xy_dir.mkdir(parents=True)
     (xy_dir / f"{stem}_CH2.tif").touch()
     (xy_dir / f"{stem}_CH4.tif").touch()
+    (xy_dir / "_A01").touch()

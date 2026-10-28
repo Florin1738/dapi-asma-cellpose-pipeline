@@ -71,6 +71,7 @@ def main(
         "--dry-run",
         help="Validate discovery and print per-acquisition destinations without writing files.",
     ),
+    plate_map: Path | None = typer.Option(None, "--plate-map", help="Verified per-assay treatment CSV."),
 ) -> None:
     project_root = Path(__file__).resolve().parents[1]
     runs = build_per_acquisition_runs(
@@ -90,6 +91,7 @@ def main(
         render_figures=render_figures,
         max_overlay_images=max_overlay_images,
         acquisition_selectors=acquisition,
+        plate_map=plate_map,
     )
     typer.echo(f"Planned {len(runs)} isolated acquisition run(s); workers={workers}.")
     for run in runs:

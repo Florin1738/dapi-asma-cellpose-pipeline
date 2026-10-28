@@ -155,6 +155,8 @@ def test_pi_style_workbook_from_rows_is_standalone_xlsx(tmp_path: Path):
     plate_3_row = _fake_summary_row()
     plate_3_row["plate"] = "Plate 3"
     plate_3_row["source_id"] = "RunC/XY03"
+    plate_3_row["field_id"] = "XY03"
+    plate_3_row["well_marker"] = "XY03/_A01"
     workbook_path = write_pi_style_workbook_from_rows(
         tmp_path / "summary.xlsx",
         [_fake_summary_row(), plate_3_row],
@@ -183,6 +185,8 @@ def test_pi_style_workbook_from_rows_is_standalone_xlsx(tmp_path: Path):
 def test_pi_style_workbook_expands_location_column_for_long_source_ids(tmp_path: Path):
     long_location_row = _fake_summary_row()
     long_location_row["source_id"] = "0087cTW_01/XY82"
+    long_location_row["field_id"] = "XY82"
+    long_location_row["well_marker"] = "XY82/_A01"
     workbook_path = write_pi_style_workbook_from_rows(
         tmp_path / "summary.xlsx",
         [long_location_row],
@@ -202,6 +206,17 @@ def _touch_pair(xy_dir: Path, stem: str) -> None:
 
 def _fake_summary_row() -> dict[str, object]:
     return {
+        "well_id": "A01",
+        "field_in_well": 1,
+        "fields_in_well": 1,
+        "treatment_mapping_status": "not_provided",
+        "assay_folder": "RunA",
+        "field_id": "XY01",
+        "well_marker": "XY01/_A01",
+        "well_marker_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "plate_map_source": "", "plate_map_sha256": "",
+        "compound": "", "batch": "", "dose": "", "condition": "",
+        "tgf_beta": "", "serum": "", "cells_seeded": "",
         "plate": "Plate 1",
         "location": "XY01",
         "source_id": "RunA/XY01",

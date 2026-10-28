@@ -15,6 +15,7 @@ from collections import deque
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from dapi_norm.well_mapping import mapping_for_acquisitions
 from typing import Any, TextIO
 
 from dapi_norm.user_cellpose_batch import (
@@ -86,6 +87,7 @@ def build_per_acquisition_runs(
     render_figures: bool = True,
     max_overlay_images: int | None = None,
     acquisition_selectors: list[str] | None = None,
+    plate_map: Path | str | None = None,
 ) -> list[PerAcquisitionRun]:
     """Discover input acquisitions and construct one non-overlapping run each.
 
@@ -108,6 +110,7 @@ def build_per_acquisition_runs(
             f"paired {target_channel_id} and {dapi_channel_id} TIFF files."
         )
     acquisitions = _select_acquisitions(acquisitions, acquisition_selectors)
+    mapping_for_acquisitions(acquisitions, Path(plate_map) if plate_map else None)
 
     logs_root = output_path / ORCHESTRATION_DIRECTORY_NAME / "logs"
     runs: list[PerAcquisitionRun] = []
@@ -138,6 +141,8 @@ def build_per_acquisition_runs(
             render_figures=render_figures,
             max_overlay_images=max_overlay_images,
         )
+        if plate_map:
+            command.extend(["--plate-map", str(Path(plate_map).resolve())])
         runs.append(
             PerAcquisitionRun(
                 input_root=acquisition.input_root,

@@ -14,6 +14,7 @@ import numpy as np
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/dapi_norm_matplotlib")
 
 from dapi_norm.image_arrays import read_primary_intensity_plane
+from dapi_norm.well_mapping import MAPPING_COLUMNS
 
 HEADERS = ["LOCATION", "aSMA intensity", "Nuclei Count", "Ratio"]
 DEFAULT_PLATES = ("Plate 1", "Plate 2")
@@ -52,6 +53,11 @@ class PiSummaryRow:
     asma_intensity: float
     nuclei_count: int | None
     source_id: str | None = None
+    well_id: str | None = None
+    field_in_well: int = 1
+    fields_in_well: int = 1
+    treatment_mapping_status: str = "not_provided"
+    qc_status: str = ""
 
     @property
     def ratio(self) -> float | None:
@@ -196,6 +202,7 @@ def write_pi_workbook(
     summary: dict[str, list[PiSummaryRow]],
     *,
     metadata: dict[str, str] | None = None,
+    mapping_rows: list[dict] | None = None,
 ) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     sheet_names = [name for name in DEFAULT_PLATES if name in summary]
@@ -205,6 +212,8 @@ def write_pi_workbook(
         summary = {name: [] for name in sheet_names}
     metadata_sheet_name = "Channel Mapping" if metadata else None
     workbook_sheet_names = [*sheet_names, *([metadata_sheet_name] if metadata_sheet_name else [])]
+    if mapping_rows is not None:
+        workbook_sheet_names.append("Well Mapping")
 
     with ZipFile(output_path, "w", compression=ZIP_DEFLATED) as zf:
         zf.writestr("[Content_Types].xml", _content_types_xml(len(workbook_sheet_names)))
@@ -219,11 +228,14 @@ def write_pi_workbook(
                 f"xl/worksheets/sheet{index}.xml",
                 _sheet_xml(summary.get(sheet_name, [])),
             )
-        if metadata is not None:
+        if metadata_sheet_name is not None:
             zf.writestr(
                 f"xl/worksheets/sheet{len(sheet_names) + 1}.xml",
                 _metadata_sheet_xml(metadata),
             )
+        if mapping_rows is not None:
+            index = len(sheet_names) + (1 if metadata_sheet_name is not None else 0) + 1
+            zf.writestr(f"xl/worksheets/sheet{index}.xml", _mapping_sheet_xml(mapping_rows))
 
 
 def write_pi_plots(output_dir: Path, summary: dict[str, list[PiSummaryRow]]) -> list[Path]:
@@ -301,7 +313,10 @@ def _find_channel_file(directory: Path, channel: str) -> Path | None:
         and path.suffix.lower() in {".tif", ".tiff"}
         and re.search(rf"(?:^|_){re.escape(channel_id)}(?:_|$)", path.stem, flags=re.IGNORECASE)
     ]
-    return sorted(candidates)[0] if candidates else None
+    if len(candidates) > 1:
+        raise ValueError(f"Duplicate channel {channel_id} in image field {directory}; "
+                         "resolve the input ambiguity before analysis")
+    return candidates[0] if candidates else None
 
 
 def _normalize_channel_id(channel: str) -> str:
@@ -375,19 +390,31 @@ def _location_sort_key(location: str) -> tuple[int, str]:
 
 
 def _sheet_xml(rows: list[PiSummaryRow]) -> str:
-    row_xml = [_row_xml(1, HEADERS, style_id=1)]
+    mapped = bool(rows) and all(row.well_id for row in rows)
+    headers = (["Image field ID", *HEADERS[1:], "Well", "Field in well", "Fields in well",
+                "Treatment mapping", "QC status"] if mapped else HEADERS)
+    last_col = "I" if mapped else "D"
+    row_xml = [_row_xml(1, headers, style_id=1)]
     for row_index, row in enumerate(rows, start=2):
         values = [row.location, row.asma_intensity, row.nuclei_count, None]
         formula = f'IF(C{row_index}>0,B{row_index}/C{row_index},"")'
-        row_xml.append(_data_row_xml(row_index, values, formula=formula, cached_ratio=row.ratio))
+        xml = _data_row_xml(row_index, values, formula=formula, cached_ratio=row.ratio)
+        if mapped:
+            extras = [row.well_id, row.field_in_well, row.fields_in_well,
+                      row.treatment_mapping_status, row.qc_status]
+            xml = xml.replace("</row>", "".join(_cell_xml(row_index, col, value, style_id=0)
+                              for col, value in enumerate(extras, start=5)) + "</row>")
+        row_xml.append(xml)
 
     dimension_last_row = max(len(rows) + 1, 1)
     location_column_width = max([14, *(len(row.location) + 2 for row in rows)])
+    extra_columns = ('<col min="5" max="7" width="16" customWidth="1"/>'
+                     '<col min="8" max="9" width="29" customWidth="1"/>' if mapped else "")
     return (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
         'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
-        f'<dimension ref="A1:D{dimension_last_row}"/>'
+        f'<dimension ref="A1:{last_col}{dimension_last_row}"/>'
         '<sheetViews><sheetView showGridLines="0" workbookViewId="0">'
         '<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/>'
         "</sheetView></sheetViews>"
@@ -395,10 +422,29 @@ def _sheet_xml(rows: list[PiSummaryRow]) -> str:
         f'<cols><col min="1" max="1" width="{location_column_width}" customWidth="1"/>'
         '<col min="2" max="2" width="20" customWidth="1"/>'
         '<col min="3" max="3" width="14" customWidth="1"/>'
-        '<col min="4" max="4" width="18" customWidth="1"/></cols>'
+        f'<col min="4" max="4" width="18" customWidth="1"/>{extra_columns}</cols>'
         f"<sheetData>{''.join(row_xml)}</sheetData>"
-        '<autoFilter ref="A1:D1"/>'
+        f'<autoFilter ref="A1:{last_col}{dimension_last_row}"/>'
         "</worksheet>"
+    )
+
+
+def _mapping_sheet_xml(rows: list[dict]) -> str:
+    columns = ("source_id", *MAPPING_COLUMNS)
+    xml_rows = [_row_xml(1, list(columns), style_id=1)]
+    for index, row in enumerate(rows, start=2):
+        xml_rows.append(_row_xml(index, [row.get(name, "") for name in columns], style_id=0))
+    end = _column_name(len(columns))
+    return (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+        f'<dimension ref="A1:{end}{len(rows)+1}"/>'
+        '<sheetViews><sheetView showGridLines="0" workbookViewId="0">'
+        '<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/>'
+        '</sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/>'
+        f'<cols><col min="1" max="{len(columns)}" width="28" customWidth="1"/></cols>'
+        f'<sheetData>{"".join(xml_rows)}</sheetData>'
+        f'<autoFilter ref="A1:{end}{len(rows)+1}"/></worksheet>'
     )
 
 

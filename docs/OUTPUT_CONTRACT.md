@@ -204,9 +204,15 @@ The active polished Excel workbook for one assay folder is:
 reports/cellpose_ch2_ch4_full_plate/workbooks/aSMA Quantification Workbook - <assay folder>.xlsx
 ```
 
-It contains one sheet per plate and presents `LOCATION`, Cellpose
+It contains one sheet per plate and presents `Image field ID`, Cellpose
 retained-region `aSMA intensity`, `Nuclei Count`, and `Ratio`. The ratio is
 Cellpose retained-region intensity divided by DAPI-positive nucleus count.
+The user-facing Cellpose runner additionally requires Well, Field in well,
+Fields in well, Treatment mapping and QC status columns, a Well Mapping
+provenance sheet and Channel Mapping metadata. Both endpoint CSVs carry the
+marker-derived identity columns. See [WELL_MAPPING.md](WELL_MAPPING.md) for
+the complete schema and fail-closed validation rules. Generic legacy PI-summary
+commands retain their old schema; they are not the mapped user-facing workflow.
 
 The broader audit workbook
 `reports/cellpose_ch2_ch4_full_plate/workbooks/cellpose_full_plate_asma_dapi_summary.xlsx`

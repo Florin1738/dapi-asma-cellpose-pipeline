@@ -6,6 +6,7 @@ from pathlib import Path
 import typer
 
 from dapi_norm.user_cellpose_batch import discover_acquisitions, run_user_cellpose_batch
+from dapi_norm.well_mapping import mapping_for_acquisitions
 
 app = typer.Typer(
     help=(
@@ -92,12 +93,14 @@ def main(
         "--overwrite",
         help="Allow writing into a non-empty output folder.",
     ),
+    plate_map: Path | None = typer.Option(None, "--plate-map", help="Verified per-assay treatment CSV."),
 ) -> None:
     acquisitions = discover_acquisitions(
         input_root,
         target_channel_id=target_channel,
         dapi_channel_id=dapi_channel,
     )
+    mapping_for_acquisitions(acquisitions, plate_map)
     typer.echo(f"Discovered {len(acquisitions)} acquisition folder(s):")
     for acquisition in acquisitions:
         typer.echo(
@@ -122,6 +125,7 @@ def main(
         render_figures=render_figures,
         max_overlay_images=max_overlay_images,
         overwrite=overwrite,
+        plate_map=plate_map,
     )
     typer.echo(f"Processed image rows: {result.rows_processed}")
     typer.echo(f"User summary CSV: {result.outputs.user_summary_csv}")

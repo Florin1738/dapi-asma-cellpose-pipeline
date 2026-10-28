@@ -4,7 +4,7 @@
 
 `scripts/run_user_cellpose_parallel_batch.py` schedules the existing validated
 Cellpose workflow separately for every discovered acquisition folder. It does
-not change segmentation, measurement, normalization, workbook contents, or QC.
+not change segmentation, measurement, normalization, or QC.
 It only allows a bounded number of independent acquisition processes to run at
 the same time.
 
@@ -41,6 +41,14 @@ named `aSMA Quantification Workbook - <assay folder>.xlsx`. The orchestration
 manifest records the exact child command, source folder, channel mapping,
 status, duration, expected workbook path, and log location for every
 acquisition.
+
+Both single and parallel user-facing runners enforce the
+[well mapping contract](WELL_MAPPING.md): preserve one microscope `_A01`-style
+marker per raw TIFF field. Dry-run rejects missing or ambiguous mappings before
+GPU work. Workbooks now distinguish field IDs from wells and include a Well
+Mapping provenance sheet; endpoint CSVs carry the same mapping. Never substitute
+scan order for these markers. Optional `--plate-map <CSV>` supplies validated
+treatments; absent treatment maps are explicitly marked `not_provided`.
 
 The runner refuses a non-empty output root so a benchmark or production run
 cannot silently mix with previous results.

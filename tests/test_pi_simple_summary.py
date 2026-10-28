@@ -19,6 +19,15 @@ from dapi_norm.pi_simple_summary import (
 )
 
 
+def test_empty_metadata_does_not_orphan_mapping_sheet(tmp_path: Path):
+    path = tmp_path/'mapped.xlsx'
+    write_pi_workbook(path, {'Plate 1': []}, metadata={}, mapping_rows=[])
+    with ZipFile(path) as archive:
+        assert 'Well Mapping' in archive.read('xl/workbook.xml').decode()
+        assert 'source_id' in archive.read('xl/worksheets/sheet2.xml').decode()
+        assert 'xl/worksheets/sheet3.xml' not in archive.namelist()
+
+
 def test_build_pi_summary_uses_raw_ch2_intensity_and_count_ratio(tmp_path: Path):
     xy01 = tmp_path / "Plate 1" / "RunA" / "XY01"
     xy01.mkdir(parents=True)

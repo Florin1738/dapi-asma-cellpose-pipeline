@@ -54,6 +54,10 @@ Parent folder/
     XY02/*_CH4.tif
 ```
 
+The user-facing Cellpose runners require microscope well markers and export
+explicit field-to-well provenance. See [the mapping contract](docs/WELL_MAPPING.md)
+before staging data; an absent treatment map is never replaced by scan-order guessing.
+
 Default channel mapping:
 
 - `CH2`: aSMA target channel
